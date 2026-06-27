@@ -55,6 +55,7 @@ export default function App() {
   // Multilingual State (Indonesian / English)
   // ----------------------------------------------------
   const [lang, setLang] = useState<'id' | 'en'>('id');
+  const [isConfigLoading, setIsConfigLoading] = useState<boolean>(true);
 
   // ----------------------------------------------------
   // Persistent States loaded from LocalStorage
@@ -370,6 +371,84 @@ export default function App() {
       return DEFAULT_PMB_CONFIG;
     }
   });
+
+  // ----------------------------------------------------
+  // Automatic Static Site Configuration Bootloader (amc_backup.json)
+  // ----------------------------------------------------
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        const res = await fetch('/amc_backup.json');
+        if (res.ok) {
+          const parsed = await res.json();
+          if (parsed && typeof parsed === 'object') {
+            console.log('AMC Bekasi: Found custom config in amc_backup.json, loading as default/override...');
+            if (parsed.images && Array.isArray(parsed.images)) {
+              setImages(parsed.images);
+              localStorage.setItem('amc_images', JSON.stringify(parsed.images));
+            }
+            if (parsed.content && typeof parsed.content === 'object') {
+              setContent(parsed.content);
+              localStorage.setItem('amc_content', JSON.stringify(parsed.content));
+            }
+            if (parsed.newsItems && Array.isArray(parsed.newsItems)) {
+              setNewsItems(parsed.newsItems);
+              localStorage.setItem('amc_news', JSON.stringify(parsed.newsItems));
+            }
+            if (parsed.facilities && Array.isArray(parsed.facilities)) {
+              setFacilities(parsed.facilities);
+              localStorage.setItem('amc_facilities', JSON.stringify(parsed.facilities));
+            }
+            if (parsed.galleryItems && Array.isArray(parsed.galleryItems)) {
+              setGalleryItems(parsed.galleryItems);
+              localStorage.setItem('amc_gallery', JSON.stringify(parsed.galleryItems));
+            }
+            if (parsed.applications && Array.isArray(parsed.applications)) {
+              setApplications(parsed.applications);
+              localStorage.setItem('amc_applications', JSON.stringify(parsed.applications));
+            }
+            if (parsed.alumniItems && Array.isArray(parsed.alumniItems)) {
+              setAlumniItems(parsed.alumniItems);
+              localStorage.setItem('amc_alumni', JSON.stringify(parsed.alumniItems));
+            }
+            if (parsed.seoSettings && typeof parsed.seoSettings === 'object') {
+              setSeoSettings(parsed.seoSettings);
+              localStorage.setItem('amc_seo', JSON.stringify(parsed.seoSettings));
+            }
+            if (parsed.users && Array.isArray(parsed.users)) {
+              setUsers(parsed.users);
+              localStorage.setItem('amc_users', JSON.stringify(parsed.users));
+            }
+            if (parsed.timelineEvents && Array.isArray(parsed.timelineEvents)) {
+              setTimelineEvents(parsed.timelineEvents);
+              localStorage.setItem('amc_timeline', JSON.stringify(parsed.timelineEvents));
+            }
+            if (parsed.lecturers && Array.isArray(parsed.lecturers)) {
+              setLecturers(parsed.lecturers);
+              localStorage.setItem('amc_lecturers', JSON.stringify(parsed.lecturers));
+            }
+            if (parsed.calendarEvents && Array.isArray(parsed.calendarEvents)) {
+              setCalendarEvents(parsed.calendarEvents);
+              localStorage.setItem('amc_calendar', JSON.stringify(parsed.calendarEvents));
+            }
+            if (parsed.programs && Array.isArray(parsed.programs)) {
+              setPrograms(parsed.programs);
+              localStorage.setItem('amc_programs', JSON.stringify(parsed.programs));
+            }
+            if (parsed.pmbConfig && typeof parsed.pmbConfig === 'object') {
+              setPmbConfig(parsed.pmbConfig);
+              localStorage.setItem('amc_pmb_config', JSON.stringify(parsed.pmbConfig));
+            }
+          }
+        }
+      } catch (e) {
+        console.log('AMC Bekasi: No amc_backup.json found or failed to parse, falling back to defaults.');
+      } finally {
+        setIsConfigLoading(false);
+      }
+    };
+    loadConfig();
+  }, []);
 
   const [currentPath, setCurrentPath] = useState<string>(window.location.pathname);
 
@@ -873,6 +952,23 @@ export default function App() {
     }
     return { ...prog, imageUrl: currentImageUrl };
   });
+
+  if (isConfigLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#031830] text-white font-sans selection:bg-gold-500 selection:text-navy-950">
+        <div className="relative flex items-center justify-center mb-6">
+          <div className="absolute w-16 h-16 border-4 border-[#FFC107]/20 border-t-[#FFC107] rounded-full animate-spin"></div>
+          <div className="w-8 h-8 rounded-full bg-[#003B7A] flex items-center justify-center">
+            <svg className="w-4 h-4 text-[#FFC107] animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-11.314l.707.707m11.314 11.314l.707.707M12 5a7 7 0 100 14 7 7 0 000-14z" />
+            </svg>
+          </div>
+        </div>
+        <p className="text-sm font-medium tracking-widest uppercase text-slate-400 animate-pulse">Memuat Situs...</p>
+        <p className="text-xs text-slate-500 mt-2">AMC Bekasi Official Website</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white text-slate-900 overflow-x-hidden font-sans selection:bg-gold-500 selection:text-navy-950">
