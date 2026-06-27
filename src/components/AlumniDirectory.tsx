@@ -172,15 +172,11 @@ export default function AlumniDirectory({ alumni, lang, onNavigate }: AlumniDire
                 className="bg-white rounded-2xl overflow-hidden shadow-md border border-slate-100 hover:shadow-xl transition-all duration-300 flex flex-col group hover:-translate-y-1.5"
               >
                 {/* Visual Header / Backdrop */}
-                <div className="h-24 bg-gradient-to-r from-navy-800 to-navy-950 relative flex items-end justify-center">
-                  <div className="absolute top-2.5 right-2.5 px-2.5 py-1 bg-gold-400 text-navy-950 rounded text-[10px] font-bold tracking-widest uppercase">
-                    {item.studyProgram}
-                  </div>
-                </div>
+                <div className="h-20 bg-gradient-to-r from-navy-800 to-navy-950 relative" />
 
-                {/* Profile Photo Overlay - Increased size to 155px with white border and soft shadow */}
-                <div className="flex justify-center -mt-[80px] mb-3 relative z-10">
-                  <div className="w-[155px] h-[155px] rounded-full border-4 border-white bg-slate-200 overflow-hidden shadow-md transition-transform group-hover:scale-105 duration-300">
+                {/* Profile Photo Overlay */}
+                <div className="flex justify-center -mt-[60px] mb-3 relative z-10">
+                  <div className="w-[120px] h-[120px] rounded-full border-4 border-white bg-slate-200 overflow-hidden shadow-md transition-transform group-hover:scale-105 duration-300">
                     {item.photo ? (
                       <img
                         src={item.photo}
@@ -196,7 +192,7 @@ export default function AlumniDirectory({ alumni, lang, onNavigate }: AlumniDire
                   </div>
                 </div>
 
-                {/* Content Details - strictly limited to specified items: Name, Program, Position, Ship, Company, Placement, Testimonial, Button */}
+                {/* Content Details - strictly limited to specified items: Name, Ship, Company, Testimonial, Button */}
                 <div className="px-6 pb-6 flex-1 flex flex-col text-center">
                   
                   {/* Full Name */}
@@ -204,48 +200,32 @@ export default function AlumniDirectory({ alumni, lang, onNavigate }: AlumniDire
                     {item.name}
                   </h3>
                   
-                  {/* Study Program */}
-                  <span className="text-[11px] font-bold text-gold-600 uppercase tracking-wider mt-1 block">
-                    Prodi {item.studyProgram}
-                  </span>
-
-                  {/* Current Position */}
-                  <p className="text-sm font-semibold text-slate-700 mt-2">
-                    {item.occupation}
+                  {/* Company Name */}
+                  <p className="text-xs font-semibold text-gold-600 uppercase tracking-wider mt-1.5 flex items-center justify-center space-x-1">
+                    <Anchor className="w-3.5 h-3.5 text-gold-500 shrink-0" />
+                    <span>{item.company}</span>
                   </p>
 
-                  {/* Ship Name & Company Name */}
-                  <div className="text-xs text-slate-500 font-medium mt-1.5 space-y-1">
-                    {item.shipName && (
-                      <p className="text-navy-800 font-semibold flex items-center justify-center space-x-1">
-                        <Ship className="w-3.5 h-3.5 text-navy-700 shrink-0" />
-                        <span>{item.shipName}</span>
-                      </p>
-                    )}
-                    <p className="flex items-center justify-center space-x-1 text-slate-600 font-medium">
-                      <Anchor className="w-3.5 h-3.5 text-gold-500 shrink-0" />
-                      <span>{item.company}</span>
+                  {/* Ship Name */}
+                  {item.shipName && (
+                    <p className="text-xs text-navy-800 font-semibold mt-1.5 flex items-center justify-center space-x-1 font-mono">
+                      <Ship className="w-3.5 h-3.5 text-navy-700 shrink-0" />
+                      <span>{item.shipName}</span>
                     </p>
-                  </div>
+                  )}
 
-                  {/* Current Placement */}
-                  <p className="text-xs text-slate-500 font-medium mt-2 flex items-center justify-center space-x-1">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span>{item.placement || item.city || 'Global Oceans'}</span>
-                  </p>
-
-                  {/* Short Testimonial */}
-                  <p className="text-slate-600 text-xs italic line-clamp-3 my-4 px-2 flex-1 border-t border-slate-100 pt-3.5">
+                  {/* Short Testimonial / Kesan Pesan */}
+                  <p className="text-slate-600 text-xs italic line-clamp-3 my-4 px-2 flex-1 border-t border-slate-100 pt-3.5 leading-relaxed">
                     "{item.testimonial}"
                   </p>
 
-                  {/* Detail Button - Single central button, no social icons */}
+                  {/* Detail Button */}
                   <div className="pt-3 border-t border-slate-50 flex items-center justify-center">
                     <button
                       onClick={() => setSelectedAlumni(item)}
                       className="w-full py-2.5 px-4 bg-navy-900 hover:bg-gold-500 hover:text-navy-950 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-sm"
                     >
-                      <span>{lang === 'id' ? 'Selengkapnya' : 'View Success Story'}</span>
+                      <span>{lang === 'id' ? 'Selengkapnya' : 'View Details'}</span>
                       <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
@@ -298,11 +278,8 @@ export default function AlumniDirectory({ alumni, lang, onNavigate }: AlumniDire
             {/* Scrollable Content - Only displaying the specified properties */}
             <div className="p-6 pt-14 overflow-y-auto flex-1 space-y-6">
               
-              {/* Name & Study Program */}
+              {/* Name only */}
               <div className="text-center md:text-left">
-                <span className="inline-block px-2.5 py-0.5 bg-gold-400 text-navy-950 text-[10px] font-extrabold tracking-widest uppercase rounded mb-1">
-                  Prodi {selectedAlumni.studyProgram}
-                </span>
                 <h2 className="font-display font-extrabold text-2xl text-navy-950">
                   {selectedAlumni.name}
                 </h2>
