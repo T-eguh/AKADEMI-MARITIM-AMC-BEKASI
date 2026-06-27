@@ -6,7 +6,7 @@
 import React, { useState, useRef } from 'react';
 import { 
   X, Lock, ShieldCheck, Eye, EyeOff, LayoutDashboard, Image, FileText, 
-  Users, Check, Trash2, Edit2, Plus, RefreshCw, Upload, Sparkles, Database,
+  Users, Check, Trash2, Edit2, Plus, RefreshCw, Upload, Download, Sparkles, Database,
   Wrench, Camera, GraduationCap, Globe, ShieldAlert, FolderOpen, Activity, Key,
   Milestone, BookOpen, Award, Calendar, Network, Flag, Compass, Target
 } from 'lucide-react';
@@ -195,7 +195,128 @@ export default function AdminPanel({
   // Dashboard simulation states
   const [exportSuccess, setExportSuccess] = useState(false);
   const [notifSuccess, setNotifSuccess] = useState(false);
+  const [migrationSuccess, setMigrationSuccess] = useState<string | null>(null);
+  const [migrationError, setMigrationError] = useState<string | null>(null);
   const [activeChart, setActiveChart] = useState<'visitors' | 'pmb' | 'news' | 'gallery'>('visitors');
+
+  const handleExportConfig = () => {
+    try {
+      const backupData = {
+        images,
+        content,
+        newsItems,
+        facilities,
+        galleryItems,
+        applications,
+        alumniItems,
+        seoSettings,
+        users,
+        mediaItems,
+        timelineEvents,
+        lecturers,
+        calendarEvents,
+        programs,
+        pmbConfig
+      };
+      const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
+        JSON.stringify(backupData, null, 2)
+      )}`;
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', jsonString);
+      downloadAnchor.setAttribute('download', `amc_bekasi_site_backup_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      setMigrationSuccess('Konfigurasi situs berhasil diekspor! Simpan file ini untuk diunggah di Vercel.');
+      setTimeout(() => setMigrationSuccess(null), 10000);
+    } catch (err) {
+      setMigrationError('Gagal mengekspor data: ' + (err instanceof Error ? err.message : String(err)));
+      setTimeout(() => setMigrationError(null), 5000);
+    }
+  };
+
+  const handleImportConfig = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        if (parsed && typeof parsed === 'object') {
+          let keysImported = [];
+          if (parsed.images && Array.isArray(parsed.images)) {
+            onUpdateImages(parsed.images);
+            keysImported.push('Gambar');
+          }
+          if (parsed.content) {
+            onUpdateContent(parsed.content);
+            keysImported.push('Konten Teks');
+          }
+          if (parsed.newsItems && Array.isArray(parsed.newsItems)) {
+            onUpdateNews(parsed.newsItems);
+            keysImported.push('Berita');
+          }
+          if (parsed.facilities && Array.isArray(parsed.facilities)) {
+            onUpdateFacilities(parsed.facilities);
+            keysImported.push('Fasilitas');
+          }
+          if (parsed.galleryItems && Array.isArray(parsed.galleryItems)) {
+            onUpdateGallery(parsed.galleryItems);
+            keysImported.push('Galeri');
+          }
+          if (parsed.applications && Array.isArray(parsed.applications)) {
+            onUpdateApplications(parsed.applications);
+            keysImported.push('Pendaftaran');
+          }
+          if (parsed.alumniItems && Array.isArray(parsed.alumniItems)) {
+            onUpdateAlumni(parsed.alumniItems);
+            keysImported.push('Alumni');
+          }
+          if (parsed.seoSettings) {
+            onUpdateSEO(parsed.seoSettings);
+            keysImported.push('SEO');
+          }
+          if (parsed.users && Array.isArray(parsed.users)) {
+            onUpdateUsers(parsed.users);
+            keysImported.push('Pengguna');
+          }
+          if (parsed.mediaItems && Array.isArray(parsed.mediaItems)) {
+            onUpdateMedia(parsed.mediaItems);
+            keysImported.push('Media');
+          }
+          if (parsed.timelineEvents && Array.isArray(parsed.timelineEvents)) {
+            onUpdateTimelineEvents(parsed.timelineEvents);
+            keysImported.push('Timeline/Sejarah');
+          }
+          if (parsed.lecturers && Array.isArray(parsed.lecturers)) {
+            onUpdateLecturers(parsed.lecturers);
+            keysImported.push('Dosen/Staf');
+          }
+          if (parsed.calendarEvents && Array.isArray(parsed.calendarEvents)) {
+            onUpdateCalendarEvents(parsed.calendarEvents);
+            keysImported.push('Kalender Akademik');
+          }
+          if (parsed.programs && Array.isArray(parsed.programs)) {
+            onUpdatePrograms(parsed.programs);
+            keysImported.push('Program Studi');
+          }
+          if (parsed.pmbConfig) {
+            onUpdatePMBConfig(parsed.pmbConfig);
+            keysImported.push('Konfigurasi PMB');
+          }
+          
+          setMigrationSuccess(`Berhasil mengimpor konfigurasi situs (${keysImported.join(', ')}). Silakan muat ulang halaman jika diperlukan.`);
+          setMigrationError(null);
+        } else {
+          setMigrationError('Format file tidak valid.');
+        }
+      } catch (err) {
+        setMigrationError('Gagal mengurai file JSON cadangan.');
+      }
+    };
+    reader.readAsText(file);
+  };
 
   // News editor states
   const [editingNewsId, setEditingNewsId] = useState<string | null>(null);
@@ -1242,6 +1363,62 @@ export default function AdminPanel({
                       <button onClick={() => setNotifSuccess(false)} className="text-indigo-500 hover:text-indigo-800 uppercase text-[10px]">Tutup</button>
                     </div>
                   )}
+
+                  {/* Vercel / Domain Migration Tool */}
+                  <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-4">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <h4 className="font-display font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                          <Database className="h-4 w-4 text-navy-900 animate-pulse" />
+                          Sinkronisasi & Migrasi Data ke Vercel / Live Site
+                        </h4>
+                        <p className="text-xs text-slate-500 max-w-3xl leading-relaxed">
+                          Sistem web ini menyimpan perubahan gambar, teks, dan prodi yang Anda edit di Admin secara lokal di browser Anda (<strong className="text-navy-900">LocalStorage</strong>). 
+                          Jika Anda membuka atau mendeploy web ke Vercel atau domain baru, data tersebut akan kosong/kembali ke default karena berada di domain berbeda. 
+                          Gunakan tombol di bawah ini untuk mengunduh semua data konfigurasi Anda dari situs ini, lalu unggah kembali di situs Vercel Anda untuk menyinkronkan semua gambar & teks secara instan!
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={handleExportConfig}
+                          className="bg-navy-900 hover:bg-navy-950 text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                          Ekspor Data (.json)
+                        </button>
+                        <label className="bg-gold-500 hover:bg-gold-600 text-navy-950 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer">
+                          <Upload className="h-3.5 w-3.5" />
+                          Impor Data (.json)
+                          <input
+                            type="file"
+                            accept=".json"
+                            onChange={handleImportConfig}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    {migrationSuccess && (
+                      <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-xl flex items-center justify-between text-xs font-semibold animate-fade-in">
+                        <div className="flex items-center space-x-2">
+                          <Check className="h-4 w-4 bg-emerald-600 text-white rounded-full p-0.5" />
+                          <span>{migrationSuccess}</span>
+                        </div>
+                        <button onClick={() => setMigrationSuccess(null)} className="text-emerald-500 hover:text-emerald-800 font-bold uppercase text-[9px]">Tutup</button>
+                      </div>
+                    )}
+
+                    {migrationError && (
+                      <div className="bg-rose-50 border border-rose-200 text-rose-800 p-3 rounded-xl flex items-center justify-between text-xs font-semibold animate-fade-in">
+                        <div className="flex items-center space-x-2">
+                          <ShieldAlert className="h-4 w-4 text-rose-600" />
+                          <span>{migrationError}</span>
+                        </div>
+                        <button onClick={() => setMigrationError(null)} className="text-rose-500 hover:text-rose-800 font-bold uppercase text-[9px]">Tutup</button>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Bento Grid layout */}
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
