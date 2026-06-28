@@ -74,7 +74,7 @@ interface AdminPanelProps {
 }
 
 // Helper function to compress and resize images client-side before saving to state/localStorage with high fidelity
-const compressAndResizeImage = (file: File, maxWidth = 2048, maxHeight = 2048, quality = 0.95): Promise<string> => {
+const compressAndResizeImage = (file: File, maxWidth = 1000, maxHeight = 1000, quality = 0.65): Promise<string> => {
   return new Promise((resolve) => {
     if (!file || !file.type.startsWith('image/')) {
       resolve('');
