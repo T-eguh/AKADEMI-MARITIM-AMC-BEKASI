@@ -470,103 +470,114 @@ export default function App() {
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        const isBackupLoaded = localStorage.getItem('amc_backup_loaded') === 'true';
-        if (isBackupLoaded) {
-          console.log('AMC Bekasi: Dynamic local storage config already loaded. Preserving custom user edits.');
-          setIsConfigLoading(false);
-          return;
-        }
-
         const res = await fetch('/amc_backup.json');
         if (res.ok) {
           const parsed = await res.json();
           if (parsed && typeof parsed === 'object') {
-            console.log('AMC Bekasi: First-time loading custom config from amc_backup.json...');
-            if (parsed.images && Array.isArray(parsed.images)) {
-              setImages(parsed.images);
-              localStorage.setItem('amc_images', JSON.stringify(parsed.images));
+            const hasLocalEdits = localStorage.getItem('amc_has_local_edits') === 'true';
+            const localTimestamp = Number(localStorage.getItem('amc_local_edits_timestamp') || '0');
+            const serverTimestamp = Number(parsed.updatedAt || '0');
+            
+            // We load the server backup if:
+            // 1. The user has never made local edits on this browser
+            // 2. OR the deployed backup file has a newer timestamp than local edits
+            // 3. OR the backup has never been loaded once before
+            const isBackupLoaded = localStorage.getItem('amc_backup_loaded') === 'true';
+            const shouldLoadBackup = !isBackupLoaded || !hasLocalEdits || (serverTimestamp > localTimestamp);
+
+            if (shouldLoadBackup) {
+              console.log('AMC Bekasi: Loading configuration from amc_backup.json...');
+              if (parsed.images && Array.isArray(parsed.images)) {
+                setImages(parsed.images);
+                localStorage.setItem('amc_images', JSON.stringify(parsed.images));
+              }
+              if (parsed.content && typeof parsed.content === 'object') {
+                setContent(parsed.content);
+                localStorage.setItem('amc_content', JSON.stringify(parsed.content));
+              }
+              if (parsed.newsItems && Array.isArray(parsed.newsItems)) {
+                setNewsItems(parsed.newsItems);
+                localStorage.setItem('amc_news', JSON.stringify(parsed.newsItems));
+              }
+              if (parsed.facilities && Array.isArray(parsed.facilities)) {
+                setFacilities(parsed.facilities);
+                localStorage.setItem('amc_facilities', JSON.stringify(parsed.facilities));
+              }
+              if (parsed.galleryItems && Array.isArray(parsed.galleryItems)) {
+                setGalleryItems(parsed.galleryItems);
+                localStorage.setItem('amc_gallery', JSON.stringify(parsed.galleryItems));
+              }
+              if (parsed.applications && Array.isArray(parsed.applications)) {
+                setApplications(parsed.applications);
+                localStorage.setItem('amc_applications', JSON.stringify(parsed.applications));
+              }
+              if (parsed.alumniItems && Array.isArray(parsed.alumniItems)) {
+                setAlumniItems(parsed.alumniItems);
+                localStorage.setItem('amc_alumni', JSON.stringify(parsed.alumniItems));
+              }
+              if (parsed.seoSettings && typeof parsed.seoSettings === 'object') {
+                setSeoSettings(parsed.seoSettings);
+                localStorage.setItem('amc_seo', JSON.stringify(parsed.seoSettings));
+              }
+              if (parsed.users && Array.isArray(parsed.users)) {
+                setUsers(parsed.users);
+                localStorage.setItem('amc_users', JSON.stringify(parsed.users));
+              }
+              if (parsed.timelineEvents && Array.isArray(parsed.timelineEvents)) {
+                setTimelineEvents(parsed.timelineEvents);
+                localStorage.setItem('amc_timeline', JSON.stringify(parsed.timelineEvents));
+              }
+              if (parsed.lecturers && Array.isArray(parsed.lecturers)) {
+                setLecturers(parsed.lecturers);
+                localStorage.setItem('amc_lecturers', JSON.stringify(parsed.lecturers));
+              }
+              if (parsed.calendarEvents && Array.isArray(parsed.calendarEvents)) {
+                setCalendarEvents(parsed.calendarEvents);
+                localStorage.setItem('amc_calendar', JSON.stringify(parsed.calendarEvents));
+              }
+              if (parsed.programs && Array.isArray(parsed.programs)) {
+                setPrograms(parsed.programs);
+                localStorage.setItem('amc_programs', JSON.stringify(parsed.programs));
+              }
+              if (parsed.pmbConfig && typeof parsed.pmbConfig === 'object') {
+                setPmbConfig(parsed.pmbConfig);
+                localStorage.setItem('amc_pmb_config', JSON.stringify(parsed.pmbConfig));
+              }
+              if (parsed.banners && Array.isArray(parsed.banners)) {
+                setBanners(parsed.banners);
+                localStorage.setItem('amc_banners', JSON.stringify(parsed.banners));
+              }
+              if (parsed.popupPromo && typeof parsed.popupPromo === 'object') {
+                setPopupPromo(parsed.popupPromo);
+                localStorage.setItem('amc_popup_promo', JSON.stringify(parsed.popupPromo));
+              }
+              if (parsed.runningTexts && Array.isArray(parsed.runningTexts)) {
+                setRunningTexts(parsed.runningTexts);
+                localStorage.setItem('amc_running_texts', JSON.stringify(parsed.runningTexts));
+              }
+              if (parsed.announcements && Array.isArray(parsed.announcements)) {
+                setAnnouncements(parsed.announcements);
+                localStorage.setItem('amc_announcements', JSON.stringify(parsed.announcements));
+              }
+              if (parsed.storeProducts && Array.isArray(parsed.storeProducts)) {
+                setStoreProducts(parsed.storeProducts);
+                localStorage.setItem('amc_store_products', JSON.stringify(parsed.storeProducts));
+              }
+              if (parsed.storeOrders && Array.isArray(parsed.storeOrders)) {
+                setStoreOrders(parsed.storeOrders);
+                localStorage.setItem('amc_store_orders', JSON.stringify(parsed.storeOrders));
+              }
+              if (parsed.sections && Array.isArray(parsed.sections)) {
+                setSections(parsed.sections);
+                localStorage.setItem('amc_sections', JSON.stringify(parsed.sections));
+              }
+              localStorage.setItem('amc_backup_loaded', 'true');
+              if (serverTimestamp > 0) {
+                localStorage.setItem('amc_local_edits_timestamp', String(serverTimestamp));
+              }
+            } else {
+              console.log('AMC Bekasi: Using newer local storage configuration.');
             }
-            if (parsed.content && typeof parsed.content === 'object') {
-              setContent(parsed.content);
-              localStorage.setItem('amc_content', JSON.stringify(parsed.content));
-            }
-            if (parsed.newsItems && Array.isArray(parsed.newsItems)) {
-              setNewsItems(parsed.newsItems);
-              localStorage.setItem('amc_news', JSON.stringify(parsed.newsItems));
-            }
-            if (parsed.facilities && Array.isArray(parsed.facilities)) {
-              setFacilities(parsed.facilities);
-              localStorage.setItem('amc_facilities', JSON.stringify(parsed.facilities));
-            }
-            if (parsed.galleryItems && Array.isArray(parsed.galleryItems)) {
-              setGalleryItems(parsed.galleryItems);
-              localStorage.setItem('amc_gallery', JSON.stringify(parsed.galleryItems));
-            }
-            if (parsed.applications && Array.isArray(parsed.applications)) {
-              setApplications(parsed.applications);
-              localStorage.setItem('amc_applications', JSON.stringify(parsed.applications));
-            }
-            if (parsed.alumniItems && Array.isArray(parsed.alumniItems)) {
-              setAlumniItems(parsed.alumniItems);
-              localStorage.setItem('amc_alumni', JSON.stringify(parsed.alumniItems));
-            }
-            if (parsed.seoSettings && typeof parsed.seoSettings === 'object') {
-              setSeoSettings(parsed.seoSettings);
-              localStorage.setItem('amc_seo', JSON.stringify(parsed.seoSettings));
-            }
-            if (parsed.users && Array.isArray(parsed.users)) {
-              setUsers(parsed.users);
-              localStorage.setItem('amc_users', JSON.stringify(parsed.users));
-            }
-            if (parsed.timelineEvents && Array.isArray(parsed.timelineEvents)) {
-              setTimelineEvents(parsed.timelineEvents);
-              localStorage.setItem('amc_timeline', JSON.stringify(parsed.timelineEvents));
-            }
-            if (parsed.lecturers && Array.isArray(parsed.lecturers)) {
-              setLecturers(parsed.lecturers);
-              localStorage.setItem('amc_lecturers', JSON.stringify(parsed.lecturers));
-            }
-            if (parsed.calendarEvents && Array.isArray(parsed.calendarEvents)) {
-              setCalendarEvents(parsed.calendarEvents);
-              localStorage.setItem('amc_calendar', JSON.stringify(parsed.calendarEvents));
-            }
-            if (parsed.programs && Array.isArray(parsed.programs)) {
-              setPrograms(parsed.programs);
-              localStorage.setItem('amc_programs', JSON.stringify(parsed.programs));
-            }
-            if (parsed.pmbConfig && typeof parsed.pmbConfig === 'object') {
-              setPmbConfig(parsed.pmbConfig);
-              localStorage.setItem('amc_pmb_config', JSON.stringify(parsed.pmbConfig));
-            }
-            if (parsed.banners && Array.isArray(parsed.banners)) {
-              setBanners(parsed.banners);
-              localStorage.setItem('amc_banners', JSON.stringify(parsed.banners));
-            }
-            if (parsed.popupPromo && typeof parsed.popupPromo === 'object') {
-              setPopupPromo(parsed.popupPromo);
-              localStorage.setItem('amc_popup_promo', JSON.stringify(parsed.popupPromo));
-            }
-            if (parsed.runningTexts && Array.isArray(parsed.runningTexts)) {
-              setRunningTexts(parsed.runningTexts);
-              localStorage.setItem('amc_running_texts', JSON.stringify(parsed.runningTexts));
-            }
-            if (parsed.announcements && Array.isArray(parsed.announcements)) {
-              setAnnouncements(parsed.announcements);
-              localStorage.setItem('amc_announcements', JSON.stringify(parsed.announcements));
-            }
-            if (parsed.storeProducts && Array.isArray(parsed.storeProducts)) {
-              setStoreProducts(parsed.storeProducts);
-              localStorage.setItem('amc_store_products', JSON.stringify(parsed.storeProducts));
-            }
-            if (parsed.storeOrders && Array.isArray(parsed.storeOrders)) {
-              setStoreOrders(parsed.storeOrders);
-              localStorage.setItem('amc_store_orders', JSON.stringify(parsed.storeOrders));
-            }
-            if (parsed.sections && Array.isArray(parsed.sections)) {
-              setSections(parsed.sections);
-              localStorage.setItem('amc_sections', JSON.stringify(parsed.sections));
-            }
-            localStorage.setItem('amc_backup_loaded', 'true');
           }
         }
       } catch (e) {
@@ -879,6 +890,7 @@ export default function App() {
     const handler = setTimeout(async () => {
       try {
         const payload = {
+          updatedAt: Date.now(),
           images,
           content,
           newsItems,
@@ -918,6 +930,38 @@ export default function App() {
 
     return () => clearTimeout(handler);
   }, [
+    images,
+    content,
+    newsItems,
+    facilities,
+    galleryItems,
+    applications,
+    alumniItems,
+    seoSettings,
+    users,
+    timelineEvents,
+    lecturers,
+    calendarEvents,
+    programs,
+    pmbConfig,
+    banners,
+    popupPromo,
+    runningTexts,
+    announcements,
+    storeProducts,
+    storeOrders,
+    sections
+  ]);
+
+  // Set local storage edit markers when admin performs modifications
+  useEffect(() => {
+    if (!isConfigLoading && isAdminLoggedIn) {
+      localStorage.setItem('amc_has_local_edits', 'true');
+      localStorage.setItem('amc_local_edits_timestamp', String(Date.now()));
+    }
+  }, [
+    isConfigLoading,
+    isAdminLoggedIn,
     images,
     content,
     newsItems,
@@ -997,10 +1041,13 @@ export default function App() {
       }
     } else {
       navigateTo('/');
+      const cleanId = target.startsWith('#') ? target.substring(1) : target;
       setTimeout(() => {
-        const el = document.getElementById(target);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 150);
+        const el = document.getElementById(cleanId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 300);
     }
   };
 

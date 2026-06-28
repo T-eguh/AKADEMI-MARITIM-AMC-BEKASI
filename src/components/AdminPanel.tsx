@@ -260,6 +260,7 @@ export default function AdminPanel({
     setMigrationSuccess(null);
     try {
       const backupData = {
+        updatedAt: Date.now(),
         images,
         content,
         newsItems,
@@ -305,6 +306,7 @@ export default function AdminPanel({
   const handleExportConfig = () => {
     try {
       const backupData = {
+        updatedAt: Date.now(),
         images,
         content,
         newsItems,
