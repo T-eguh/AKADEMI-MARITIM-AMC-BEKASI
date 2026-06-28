@@ -869,6 +869,78 @@ export default function App() {
     }
   }, [sections]);
 
+  // Automatic server-side backup saving for Vercel deployment preparation
+  useEffect(() => {
+    // Only attempt in development environments
+    if (window.location.hostname !== 'localhost' && !window.location.hostname.includes('.run.app')) {
+      return;
+    }
+
+    const handler = setTimeout(async () => {
+      try {
+        const payload = {
+          images,
+          content,
+          newsItems,
+          facilities,
+          galleryItems,
+          applications,
+          alumniItems,
+          seoSettings,
+          users,
+          timelineEvents,
+          lecturers,
+          calendarEvents,
+          programs,
+          pmbConfig,
+          banners,
+          popupPromo,
+          runningTexts,
+          announcements,
+          storeProducts,
+          storeOrders,
+          sections
+        };
+        const response = await fetch('/api/save-backup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        if (response.ok) {
+          console.log('AMC Bekasi: Saved state to public/amc_backup.json automatically on server');
+        }
+      } catch (err) {
+        // Silent catch for production/Vercel builds where /api/save-backup does not exist
+      }
+    }, 2000);
+
+    return () => clearTimeout(handler);
+  }, [
+    images,
+    content,
+    newsItems,
+    facilities,
+    galleryItems,
+    applications,
+    alumniItems,
+    seoSettings,
+    users,
+    timelineEvents,
+    lecturers,
+    calendarEvents,
+    programs,
+    pmbConfig,
+    banners,
+    popupPromo,
+    runningTexts,
+    announcements,
+    storeProducts,
+    storeOrders,
+    sections
+  ]);
+
 
   // ----------------------------------------------------
   // Navigation & Page Routing

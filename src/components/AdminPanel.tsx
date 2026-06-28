@@ -252,6 +252,55 @@ export default function AdminPanel({
   const [migrationSuccess, setMigrationSuccess] = useState<string | null>(null);
   const [migrationError, setMigrationError] = useState<string | null>(null);
   const [activeChart, setActiveChart] = useState<'visitors' | 'pmb' | 'news' | 'agenda' | 'gallery'>('visitors');
+  const [savingToProject, setSavingToProject] = useState(false);
+
+  const handleSaveToProjectFiles = async () => {
+    setSavingToProject(true);
+    setMigrationError(null);
+    setMigrationSuccess(null);
+    try {
+      const backupData = {
+        images,
+        content,
+        newsItems,
+        facilities,
+        galleryItems,
+        applications,
+        alumniItems,
+        seoSettings,
+        users,
+        mediaItems,
+        timelineEvents,
+        lecturers,
+        calendarEvents,
+        programs,
+        pmbConfig,
+        banners,
+        popupPromo,
+        runningTexts,
+        announcements,
+        storeProducts,
+        storeOrders,
+        sections
+      };
+      const response = await fetch('/api/save-backup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(backupData)
+      });
+      if (response.ok) {
+        setMigrationSuccess('Perubahan berhasil disimpan secara permanen ke dalam file proyek "public/amc_backup.json"! Anda kini bebas mendeploy langsung ke Vercel tanpa khawatir data/foto hilang.');
+      } else {
+        throw new Error('Server mengembalikan status error saat menyimpan data.');
+      }
+    } catch (err) {
+      setMigrationError('Gagal menyimpan ke file proyek: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setSavingToProject(false);
+    }
+  };
 
   const handleExportConfig = () => {
     try {
@@ -270,7 +319,14 @@ export default function AdminPanel({
         lecturers,
         calendarEvents,
         programs,
-        pmbConfig
+        pmbConfig,
+        banners,
+        popupPromo,
+        runningTexts,
+        announcements,
+        storeProducts,
+        storeOrders,
+        sections
       };
       const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
         JSON.stringify(backupData, null, 2)
@@ -281,8 +337,8 @@ export default function AdminPanel({
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
-      setMigrationSuccess('Konfigurasi situs berhasil diekspor! Simpan file ini untuk diunggah di Vercel.');
-      setTimeout(() => setMigrationSuccess(null), 10000);
+      setMigrationSuccess('Ekspor sukses! Agar semua data/foto ini ikut ke Vercel, ubah nama file ini menjadi "amc_backup.json" lalu taruh di dalam folder "public" proyek Anda sebelum di-deploy/push!');
+      setTimeout(() => setMigrationSuccess(null), 15000);
     } catch (err) {
       setMigrationError('Gagal mengekspor data: ' + (err instanceof Error ? err.message : String(err)));
       setTimeout(() => setMigrationError(null), 5000);
@@ -358,6 +414,34 @@ export default function AdminPanel({
           if (parsed.pmbConfig) {
             onUpdatePMBConfig(parsed.pmbConfig);
             keysImported.push('Konfigurasi PMB');
+          }
+          if (parsed.banners && Array.isArray(parsed.banners)) {
+            onUpdateBanners(parsed.banners);
+            keysImported.push('Banner Promosi');
+          }
+          if (parsed.popupPromo) {
+            onUpdatePopupPromo(parsed.popupPromo);
+            keysImported.push('Popup Promo');
+          }
+          if (parsed.runningTexts && Array.isArray(parsed.runningTexts)) {
+            onUpdateRunningTexts(parsed.runningTexts);
+            keysImported.push('Running Text');
+          }
+          if (parsed.announcements && Array.isArray(parsed.announcements)) {
+            onUpdateAnnouncements(parsed.announcements);
+            keysImported.push('Pengumuman');
+          }
+          if (parsed.storeProducts && Array.isArray(parsed.storeProducts)) {
+            onUpdateStoreProducts(parsed.storeProducts);
+            keysImported.push('Produk Store');
+          }
+          if (parsed.storeOrders && Array.isArray(parsed.storeOrders)) {
+            onUpdateStoreOrders(parsed.storeOrders);
+            keysImported.push('Pesanan Store');
+          }
+          if (parsed.sections && Array.isArray(parsed.sections)) {
+            onUpdateSections(parsed.sections);
+            keysImported.push('Struktur Section');
           }
           
           setMigrationSuccess(`Berhasil mengimpor konfigurasi situs (${keysImported.join(', ')}). Silakan muat ulang halaman jika diperlukan.`);
@@ -1515,15 +1599,23 @@ export default function AdminPanel({
                       <div className="space-y-1">
                         <h4 className="font-display font-extrabold text-slate-900 text-sm flex items-center gap-2">
                           <Database className="h-4 w-4 text-navy-900 animate-pulse" />
-                          Sinkronisasi & Migrasi Data ke Vercel / Live Site
+                          Sinkronisasi & Migrasi Otomatis ke Vercel / Live Site
                         </h4>
                         <p className="text-xs text-slate-500 max-w-3xl leading-relaxed">
                           Sistem web ini menyimpan perubahan gambar, teks, dan prodi yang Anda edit di Admin secara lokal di browser Anda (<strong className="text-navy-900">LocalStorage</strong>). 
-                          Jika Anda membuka atau mendeploy web ke Vercel atau domain baru, data tersebut akan kosong/kembali ke default karena berada di domain berbeda. 
-                          Gunakan tombol di bawah ini untuk mengunduh semua data konfigurasi Anda dari situs ini, lalu unggah kembali di situs Vercel Anda untuk menyinkronkan semua gambar & teks secara instan!
+                          Untuk kenyamanan Anda, <strong className="text-emerald-600">sistem kami sekarang otomatis menyinkronkan semua data dan foto yang Anda edit langsung ke dalam file proyek ("public/amc_backup.json") di server dalam 2 detik.</strong> 
+                          Saat Anda melakukan deploy ke Vercel melalui AI Studio atau mengunduh kode ZIP, hasil edit Anda akan langsung ikut serta. Anda juga dapat menggunakan tombol <strong className="text-indigo-600">"Simpan Permanen ke Proyek"</strong> untuk memicu penyimpanan manual secara instan!
                         </p>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                        <button
+                          onClick={handleSaveToProjectFiles}
+                          disabled={savingToProject}
+                          className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all"
+                        >
+                          <Check className="h-3.5 w-3.5 animate-bounce" />
+                          {savingToProject ? 'Menyimpan...' : 'Simpan Permanen ke Proyek'}
+                        </button>
                         <button
                           onClick={handleExportConfig}
                           className="bg-navy-900 hover:bg-navy-950 text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all"
