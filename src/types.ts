@@ -138,6 +138,11 @@ export interface SiteContent {
     izinHubla: string;
     izinKemendikbud: string;
   };
+  phone?: string;
+  whatsapp?: string;
+  email?: string;
+  address?: string;
+  mapsEmbed?: string;
 }
 
 export interface AlumniItem {
@@ -161,6 +166,7 @@ export interface AlumniItem {
   shipName?: string;
   placement?: string;
   displayOrder?: number;
+  rating?: number;
 }
 
 export interface SEOSettings {
@@ -179,6 +185,10 @@ export interface UserItem {
   fullName: string;
   role: 'Super Admin' | 'Admin' | 'Editor' | 'News Admin' | 'PMB Admin';
   email: string;
+  avatar?: string;
+  status?: 'Aktif' | 'Nonaktif';
+  lastLogin?: string;
+  password?: string;
 }
 
 export interface MediaItem {
@@ -260,5 +270,99 @@ export interface PMBConfig {
     a: string;
   }[];
 }
+
+export interface BannerPromoItem {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  targetLink: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  category: 'PMB' | 'Beasiswa' | 'Seminar' | 'Wisuda' | 'Event' | 'Lomba' | 'Sponsor' | string;
+  image?: string;
+  link?: string;
+}
+
+export interface PopupPromoConfig {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  actionLink: string;
+  actionText: string;
+  isActive: boolean;
+  isEnabled?: boolean;
+  link?: string;
+  displayDelay?: number;
+  image?: string;
+}
+
+export interface RunningTextConfig {
+  id: string;
+  text: string;
+  isActive: boolean;
+  color?: string;
+}
+
+export interface AnnouncementItem {
+  id: string;
+  title: string;
+  content: string;
+  date: string;
+  status: 'draft' | 'published';
+  category?: string;
+}
+
+export interface StoreProduct {
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+  stock: number;
+  category: 'Jas Almamater' | 'Kaos' | 'Topi' | 'Buku' | 'Modul' | 'Mug' | 'Jaket' | 'Merchandise Alumni' | string;
+  images: string[];
+  imageUrl: string;
+  image?: string;
+}
+
+export interface StoreOrder {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string;
+  shippingAddress: string;
+  items?: {
+    productId: string;
+    productName: string;
+    quantity: number;
+    price: number;
+    image?: string;
+  }[];
+  totalPrice?: number;
+  totalAmount?: number;
+  paymentMethod: 'WhatsApp Order' | 'Transfer Bank' | string;
+  status: 'Pending' | 'Selesai' | 'Dibatalkan' | 'Paid' | 'Shipped' | 'Cancelled' | 'pending' | string;
+  createdAt?: string;
+  date?: string;
+  orderDate?: string;
+  buyerName?: string;
+  buyerNIM?: string;
+  buyerPhone?: string;
+  productName?: string;
+  quantity?: number;
+  receiptImage?: string;
+}
+
+export interface PageSectionConfig {
+  id: string;
+  name: string;
+  label: string;
+  isEnabled: boolean;
+  order: number;
+}
+
+
 
 

@@ -8,12 +8,14 @@ import {
   X, Lock, ShieldCheck, Eye, EyeOff, LayoutDashboard, Image, FileText, 
   Users, Check, Trash2, Edit2, Plus, RefreshCw, Upload, Download, Sparkles, Database,
   Wrench, Camera, GraduationCap, Globe, ShieldAlert, FolderOpen, Activity, Key,
-  Milestone, BookOpen, Award, Calendar, Network, Flag, Compass, Target
+  Milestone, BookOpen, Award, Calendar, Network, Flag, Compass, Target,
+  Megaphone, ShoppingBag, Settings, Bell, MessageSquare
 } from 'lucide-react';
 import { 
   WebsiteImage, SiteContent, NewsItem, PMBApplication, FacilityItem, GalleryItem,
   AlumniItem, SEOSettings, UserItem, MediaItem, ActivityLogItem,
-  TimelineEvent, LecturerItem, CalendarEventItem, ProgramItem, PMBConfig
+  TimelineEvent, LecturerItem, CalendarEventItem, ProgramItem, PMBConfig,
+  BannerPromoItem, PopupPromoConfig, RunningTextConfig, AnnouncementItem, StoreProduct, StoreOrder, PageSectionConfig
 } from '../types';
 import AdminPanelExtensions from './AdminPanelExtensions';
 
@@ -55,10 +57,24 @@ interface AdminPanelProps {
   onUpdatePrograms?: (items: ProgramItem[]) => void;
   pmbConfig?: PMBConfig;
   onUpdatePMBConfig?: (config: PMBConfig) => void;
+  banners?: BannerPromoItem[];
+  onUpdateBanners?: (items: BannerPromoItem[]) => void;
+  popupPromo?: PopupPromoConfig;
+  onUpdatePopupPromo?: (config: PopupPromoConfig) => void;
+  runningTexts?: RunningTextConfig[];
+  onUpdateRunningTexts?: (texts: RunningTextConfig[]) => void;
+  announcements?: AnnouncementItem[];
+  onUpdateAnnouncements?: (items: AnnouncementItem[]) => void;
+  storeProducts?: StoreProduct[];
+  onUpdateStoreProducts?: (items: StoreProduct[]) => void;
+  storeOrders?: StoreOrder[];
+  onUpdateStoreOrders?: (items: StoreOrder[]) => void;
+  sections?: PageSectionConfig[];
+  onUpdateSections?: (sections: PageSectionConfig[]) => void;
 }
 
-// Helper function to compress and resize images client-side before saving to state/localStorage
-const compressAndResizeImage = (file: File, maxWidth = 1280, maxHeight = 1280, quality = 0.8): Promise<string> => {
+// Helper function to compress and resize images client-side before saving to state/localStorage with high fidelity
+const compressAndResizeImage = (file: File, maxWidth = 2048, maxHeight = 2048, quality = 0.95): Promise<string> => {
   return new Promise((resolve) => {
     if (!file || !file.type.startsWith('image/')) {
       resolve('');
@@ -102,6 +118,10 @@ const compressAndResizeImage = (file: File, maxWidth = 1280, maxHeight = 1280, q
         return;
       }
 
+      // High-quality image smoothing configuration to prevent blurriness
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+
       // Fill a clean solid white background first to handle transparency in PNGs smoothly (avoids black backgrounds)
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, width, height);
@@ -109,7 +129,7 @@ const compressAndResizeImage = (file: File, maxWidth = 1280, maxHeight = 1280, q
       ctx.drawImage(img, 0, 0, width, height);
       
       try {
-        // Compress to lightweight high-fidelity JPEGs which are extremely fast and small
+        // Compress to high-fidelity JPEG with 0.95 quality to prevent compression blur
         const dataUrl = canvas.toDataURL('image/jpeg', quality);
         resolve(dataUrl);
       } catch (e) {
@@ -173,7 +193,21 @@ export default function AdminPanel({
   programs = [],
   onUpdatePrograms = () => {},
   pmbConfig,
-  onUpdatePMBConfig = () => {}
+  onUpdatePMBConfig = () => {},
+  banners = [],
+  onUpdateBanners = () => {},
+  popupPromo,
+  onUpdatePopupPromo = () => {},
+  runningTexts = [],
+  onUpdateRunningTexts = () => {},
+  announcements = [],
+  onUpdateAnnouncements = () => {},
+  storeProducts = [],
+  onUpdateStoreProducts = () => {},
+  storeOrders = [],
+  onUpdateStoreOrders = () => {},
+  sections = [],
+  onUpdateSections = () => {}
 }: AdminPanelProps) {
   
   // Login states
@@ -182,8 +216,28 @@ export default function AdminPanel({
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
 
-  // Active tab in admin panel
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'images' | 'content' | 'facilities' | 'gallery' | 'news' | 'applications' | 'alumni' | 'seo' | 'users' | 'media' | 'logs' | 'timeline' | 'visimisi' | 'dosen' | 'kalender' | 'programs' | 'pmb_config'>('dashboard');
+  // Active tab in admin panel - fully representing the requested 18 specific sections
+  const [activeTab, setActiveTab] = useState<
+    | 'dashboard'
+    | 'news'
+    | 'news_categories'
+    | 'programs'
+    | 'gallery'
+    | 'facilities'
+    | 'calendar'
+    | 'announcements'
+    | 'banners'
+    | 'popup'
+    | 'runningText'
+    | 'testimonials'
+    | 'store_products'
+    | 'store_orders'
+    | 'contact'
+    | 'applications'
+    | 'admin'
+    | 'website_config'
+    | 'sections_builder'
+  >('dashboard');
 
   // Selected image edit id
   const [editingImageId, setEditingImageId] = useState<string | null>(null);
@@ -197,7 +251,7 @@ export default function AdminPanel({
   const [notifSuccess, setNotifSuccess] = useState(false);
   const [migrationSuccess, setMigrationSuccess] = useState<string | null>(null);
   const [migrationError, setMigrationError] = useState<string | null>(null);
-  const [activeChart, setActiveChart] = useState<'visitors' | 'pmb' | 'news' | 'gallery'>('visitors');
+  const [activeChart, setActiveChart] = useState<'visitors' | 'pmb' | 'news' | 'agenda' | 'gallery'>('visitors');
 
   const handleExportConfig = () => {
     try {
@@ -936,16 +990,18 @@ export default function AdminPanel({
           <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-slate-100">
             
             {/* Sidebar Navigation */}
-            <aside className="md:w-60 bg-white border-r border-slate-200 shrink-0 flex flex-col justify-between py-6 px-4">
-              <div className="space-y-5">
+            <aside className="md:w-64 bg-white border-r border-slate-200 shrink-0 flex flex-col justify-between py-6 px-4">
+              <div className="space-y-6 flex-1 overflow-y-auto pr-1 max-h-[75vh] scrollbar-thin">
+                
+                {/* Kategori: UTAMA */}
                 <div className="space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">NAVIGASI ADMIN</span>
+                  <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-1 px-3">UTAMA & PENDAFTARAN</span>
                   <div className="flex flex-col space-y-1">
                     
-                    {/* Dashboard & Statistik */}
+                    {/* 1. Dashboard & Statistik */}
                     <button
                       onClick={() => setActiveTab('dashboard')}
-                      className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors ${
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
                         activeTab === 'dashboard'
                           ? 'bg-navy-800 text-white shadow-md'
                           : 'text-gray-600 hover:bg-slate-50'
@@ -955,252 +1011,293 @@ export default function AdminPanel({
                       <span>Dashboard & Statistik</span>
                     </button>
 
-                    {/* Atur Gambar */}
+                    {/* 2. Pendaftaran PMB */}
                     <button
-                      onClick={() => setActiveTab('images')}
-                      className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors ${
-                        activeTab === 'images'
+                      onClick={() => setActiveTab('applications')}
+                      className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors relative cursor-pointer ${
+                        activeTab === 'applications'
                           ? 'bg-navy-800 text-white shadow-md'
                           : 'text-gray-600 hover:bg-slate-50'
                       }`}
                     >
-                      <Image className="h-4 w-4 shrink-0" />
-                      <span>Atur Gambar Web</span>
+                      <div className="flex items-center space-x-2.5">
+                        <Users className="h-4 w-4 shrink-0" />
+                        <span>Pendaftaran</span>
+                      </div>
+                      {applications.filter(a => a.status === 'Pending').length > 0 && (
+                        <span className="h-4 min-w-4 px-1 rounded-full bg-amber-500 text-white font-sans text-[9px] font-extrabold flex items-center justify-center">
+                          {applications.filter(a => a.status === 'Pending').length}
+                        </span>
+                      )}
                     </button>
 
-                    {/* Atur Konten */}
-                    <button
-                      onClick={() => setActiveTab('content')}
-                      className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors ${
-                        activeTab === 'content'
-                          ? 'bg-navy-800 text-white shadow-md'
-                          : 'text-gray-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      <FileText className="h-4 w-4 shrink-0" />
-                      <span>Atur Konten Teks</span>
-                    </button>
-
-                    {/* Kelola Fasilitas */}
-                    <button
-                      onClick={() => setActiveTab('facilities')}
-                      className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors ${
-                        activeTab === 'facilities'
-                          ? 'bg-navy-800 text-white shadow-md'
-                          : 'text-gray-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      <Wrench className="h-4 w-4 shrink-0" />
-                      <span>Kelola Fasilitas</span>
-                    </button>
-
-                    {/* Kelola Galeri */}
-                    <button
-                      onClick={() => setActiveTab('gallery')}
-                      className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors ${
-                        activeTab === 'gallery'
-                          ? 'bg-navy-800 text-white shadow-md'
-                          : 'text-gray-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      <Camera className="h-4 w-4 shrink-0" />
-                      <span>Kelola Galeri</span>
-                    </button>
-
-                    {/* Manajemen Berita */}
+                    {/* 3. Kelola Berita */}
                     <button
                       onClick={() => setActiveTab('news')}
-                      className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors ${
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
                         activeTab === 'news'
                           ? 'bg-navy-800 text-white shadow-md'
                           : 'text-gray-600 hover:bg-slate-50'
                       }`}
                     >
                       <Sparkles className="h-4 w-4 shrink-0" />
-                      <span>Kelola Berita</span>
+                      <span>Berita</span>
                     </button>
 
-                    {/* Pendaftar PMB */}
+                    {/* 4. Kategori Berita */}
                     <button
-                      onClick={() => setActiveTab('applications')}
-                      className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors relative ${
-                        activeTab === 'applications'
+                      onClick={() => setActiveTab('news_categories')}
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
+                        activeTab === 'news_categories'
                           ? 'bg-navy-800 text-white shadow-md'
                           : 'text-gray-600 hover:bg-slate-50'
                       }`}
                     >
-                      <Users className="h-4 w-4 shrink-0" />
-                      <span>Pendaftar PMB</span>
-                      
-                      {applications.filter(a => a.status === 'Pending').length > 0 && (
-                        <span className="absolute right-2 top-2.5 h-4 min-w-4 px-1 rounded-full bg-amber-500 text-white font-sans text-[9px] font-extrabold flex items-center justify-center">
-                          {applications.filter(a => a.status === 'Pending').length}
-                        </span>
-                      )}
+                      <Compass className="h-4 w-4 shrink-0" />
+                      <span>Kategori Berita</span>
                     </button>
 
-                    {/* Kelola Alumni */}
+                    {/* 5. Pengumuman */}
                     <button
-                      onClick={() => setActiveTab('alumni')}
-                      className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors ${
-                        activeTab === 'alumni'
+                      onClick={() => setActiveTab('announcements')}
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
+                        activeTab === 'announcements'
                           ? 'bg-navy-800 text-white shadow-md'
                           : 'text-gray-600 hover:bg-slate-50'
                       }`}
                     >
-                      <GraduationCap className="h-4 w-4 shrink-0" />
-                      <span>Kelola Alumni</span>
+                      <Bell className="h-4 w-4 shrink-0" />
+                      <span>Pengumuman</span>
                     </button>
 
-                    {/* Kelola Program Studi */}
+                    {/* 6. Program Studi */}
                     <button
-                      id="btn-admin-tab-programs"
                       onClick={() => setActiveTab('programs')}
-                      className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors ${
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
                         activeTab === 'programs'
                           ? 'bg-navy-800 text-white shadow-md'
                           : 'text-gray-600 hover:bg-slate-50'
                       }`}
                     >
-                      <BookOpen className="h-4 w-4 shrink-0 text-indigo-500" />
-                      <span>Kelola Program Studi</span>
+                      <BookOpen className="h-4 w-4 shrink-0" />
+                      <span>Program Studi</span>
                     </button>
 
-                    {/* Konfigurasi PMB */}
+                    {/* 7. Testimoni */}
                     <button
-                      id="btn-admin-tab-pmb-config"
-                      onClick={() => setActiveTab('pmb_config')}
-                      className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors ${
-                        activeTab === 'pmb_config'
+                      onClick={() => setActiveTab('testimonials')}
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
+                        activeTab === 'testimonials'
                           ? 'bg-navy-800 text-white shadow-md'
                           : 'text-gray-600 hover:bg-slate-50'
                       }`}
                     >
-                      <Wrench className="h-4 w-4 shrink-0 text-amber-500" />
-                      <span>Konfigurasi PMB</span>
+                      <GraduationCap className="h-4 w-4 shrink-0" />
+                      <span>Testimoni</span>
                     </button>
 
-                    {/* Pengaturan SEO */}
+                  </div>
+                </div>
+
+                {/* Kategori: MEDIA & FASILITAS */}
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-1 px-3">MEDIA & FASILITAS</span>
+                  <div className="flex flex-col space-y-1">
+
+                    {/* 8. Kelola Galeri */}
                     <button
-                      onClick={() => setActiveTab('seo')}
-                      className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors ${
-                        activeTab === 'seo'
+                      onClick={() => setActiveTab('gallery')}
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
+                        activeTab === 'gallery'
                           ? 'bg-navy-800 text-white shadow-md'
                           : 'text-gray-600 hover:bg-slate-50'
                       }`}
                     >
-                      <Globe className="h-4 w-4 shrink-0" />
-                      <span>Pengaturan SEO</span>
+                      <Camera className="h-4 w-4 shrink-0" />
+                      <span>Galeri</span>
                     </button>
 
-                    {/* Hak Akses Pengguna */}
+                    {/* 9. Kelola Fasilitas */}
                     <button
-                      onClick={() => setActiveTab('users')}
-                      className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors ${
-                        activeTab === 'users'
+                      onClick={() => setActiveTab('facilities')}
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
+                        activeTab === 'facilities'
                           ? 'bg-navy-800 text-white shadow-md'
                           : 'text-gray-600 hover:bg-slate-50'
                       }`}
                     >
-                      <ShieldAlert className="h-4 w-4 shrink-0" />
-                      <span>Pengguna & Peran</span>
+                      <Wrench className="h-4 w-4 shrink-0" />
+                      <span>Fasilitas</span>
                     </button>
 
-                    {/* Media Library */}
+                    {/* 10. Agenda */}
                     <button
-                      onClick={() => setActiveTab('media')}
-                      className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors ${
-                        activeTab === 'media'
+                      onClick={() => setActiveTab('calendar')}
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
+                        activeTab === 'calendar'
                           ? 'bg-navy-800 text-white shadow-md'
                           : 'text-gray-600 hover:bg-slate-50'
                       }`}
                     >
-                      <FolderOpen className="h-4 w-4 shrink-0" />
-                      <span>Media Library</span>
+                      <Calendar className="h-4 w-4 shrink-0" />
+                      <span>Agenda</span>
                     </button>
 
-                    {/* Log Aktivitas Audit */}
+                  </div>
+                </div>
+
+                {/* Kategori: PROMOSI & IKLAN */}
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-1 px-3">PROMOSI & IKLAN</span>
+                  <div className="flex flex-col space-y-1">
+
+                    {/* 11. Banner Promosi */}
                     <button
-                      onClick={() => setActiveTab('logs')}
-                      className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors ${
-                        activeTab === 'logs'
+                      onClick={() => setActiveTab('banners')}
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
+                        activeTab === 'banners'
+                          ? 'bg-navy-800 text-white shadow-md'
+                          : 'text-gray-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Image className="h-4 w-4 shrink-0" />
+                      <span>Banner Promosi</span>
+                    </button>
+
+                    {/* 12. Popup Promosi */}
+                    <button
+                      onClick={() => setActiveTab('popup')}
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
+                        activeTab === 'popup'
+                          ? 'bg-navy-800 text-white shadow-md'
+                          : 'text-gray-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Megaphone className="h-4 w-4 shrink-0" />
+                      <span>Popup Promosi</span>
+                    </button>
+
+                    {/* 13. Running Text */}
+                    <button
+                      onClick={() => setActiveTab('runningText')}
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
+                        activeTab === 'runningText'
                           ? 'bg-navy-800 text-white shadow-md'
                           : 'text-gray-600 hover:bg-slate-50'
                       }`}
                     >
                       <Activity className="h-4 w-4 shrink-0" />
-                      <span>Log Aktivitas</span>
+                      <span>Running Text</span>
                     </button>
 
                   </div>
                 </div>
 
-                <div className="space-y-1 mt-4">
-                  <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">PROFIL & AKADEMIK</span>
+                {/* Kategori: E-COMMERCE (AMC STORE) */}
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-1 px-3">AMC STORE</span>
                   <div className="flex flex-col space-y-1">
-                    
-                    {/* Atur Sejarah */}
+
+                    {/* 14. AMC Store Produk */}
                     <button
-                      id="btn-admin-tab-timeline"
-                      onClick={() => setActiveTab('timeline')}
-                      className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors ${
-                        activeTab === 'timeline'
+                      onClick={() => setActiveTab('store_products')}
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
+                        activeTab === 'store_products'
                           ? 'bg-navy-800 text-white shadow-md'
                           : 'text-gray-600 hover:bg-slate-50'
                       }`}
                     >
-                      <Milestone className="h-4 w-4 shrink-0 text-amber-500" />
-                      <span>Atur Sejarah / Timeline</span>
+                      <ShoppingBag className="h-4 w-4 shrink-0" />
+                      <span>AMC Store</span>
                     </button>
 
-                    {/* Atur Visi Misi */}
+                    {/* 15. Pesanan Store */}
                     <button
-                      id="btn-admin-tab-visimisi"
-                      onClick={() => setActiveTab('visimisi')}
-                      className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors ${
-                        activeTab === 'visimisi'
+                      onClick={() => setActiveTab('store_orders')}
+                      className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer relative ${
+                        activeTab === 'store_orders'
                           ? 'bg-navy-800 text-white shadow-md'
                           : 'text-gray-600 hover:bg-slate-50'
                       }`}
                     >
-                      <Target className="h-4 w-4 shrink-0 text-red-500" />
-                      <span>Atur Visi & Misi</span>
-                    </button>
-
-                    {/* Kelola Dosen */}
-                    <button
-                      id="btn-admin-tab-dosen"
-                      onClick={() => setActiveTab('dosen')}
-                      className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors ${
-                        activeTab === 'dosen'
-                          ? 'bg-navy-800 text-white shadow-md'
-                          : 'text-gray-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      <Users className="h-4 w-4 shrink-0 text-blue-500" />
-                      <span>Kelola Direktori Dosen</span>
-                    </button>
-
-                    {/* Kalender Akademik */}
-                    <button
-                      id="btn-admin-tab-kalender"
-                      onClick={() => setActiveTab('kalender')}
-                      className={`flex items-center space-x-2.5 px-3 py-2.5 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors ${
-                        activeTab === 'kalender'
-                          ? 'bg-navy-800 text-white shadow-md'
-                          : 'text-gray-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      <Calendar className="h-4 w-4 shrink-0 text-emerald-500" />
-                      <span>Kalender Akademik</span>
+                      <div className="flex items-center space-x-2.5">
+                        <FileText className="h-4 w-4 shrink-0" />
+                        <span>Pesanan</span>
+                      </div>
+                      {storeOrders.filter(o => o.status === 'Pending').length > 0 && (
+                        <span className="h-4 min-w-4 px-1 rounded-full bg-indigo-600 text-white font-sans text-[9px] font-extrabold flex items-center justify-center animate-pulse">
+                          {storeOrders.filter(o => o.status === 'Pending').length}
+                        </span>
+                      )}
                     </button>
 
                   </div>
                 </div>
+
+                {/* Kategori: PENGATURAN */}
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-1 px-3">PENGATURAN</span>
+                  <div className="flex flex-col space-y-1">
+
+                    {/* 16. Kontak */}
+                    <button
+                      onClick={() => setActiveTab('contact')}
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
+                        activeTab === 'contact'
+                          ? 'bg-navy-800 text-white shadow-md'
+                          : 'text-gray-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <MessageSquare className="h-4 w-4 shrink-0" />
+                      <span>Kontak</span>
+                    </button>
+
+                    {/* 17. Admin */}
+                    <button
+                      onClick={() => setActiveTab('admin')}
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
+                        activeTab === 'admin'
+                          ? 'bg-navy-800 text-white shadow-md'
+                          : 'text-gray-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <ShieldAlert className="h-4 w-4 shrink-0" />
+                      <span>Admin</span>
+                    </button>
+
+                    {/* 18. Pengaturan Website */}
+                    <button
+                      onClick={() => setActiveTab('website_config')}
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
+                        activeTab === 'website_config'
+                          ? 'bg-navy-800 text-white shadow-md'
+                          : 'text-gray-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Settings className="h-4 w-4 shrink-0" />
+                      <span>Pengaturan Website</span>
+                    </button>
+
+                    {/* 19. Tata Letak (Page Builder) */}
+                    <button
+                      onClick={() => setActiveTab('sections_builder')}
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
+                        activeTab === 'sections_builder'
+                          ? 'bg-navy-800 text-white shadow-md'
+                          : 'text-gray-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <LayoutDashboard className="h-4 w-4 shrink-0 text-amber-500" />
+                      <span>Tata Letak (Page Builder)</span>
+                    </button>
+
+                  </div>
+                </div>
+
               </div>
 
               {/* Sidebar Footer Controls */}
-              <div className="space-y-3.5 pt-4 border-t border-slate-100">
+              <div className="space-y-3.5 pt-4 border-t border-slate-100 shrink-0">
                 <button
                   onClick={onResetToDefaults}
                   className="w-full flex items-center justify-center space-x-2 p-2 rounded-lg border border-dashed border-red-200 text-red-600 bg-red-500/5 hover:bg-red-500 hover:text-white transition-all text-xs font-bold cursor-pointer"
@@ -1258,87 +1355,135 @@ export default function AdminPanel({
                       </div>
                     </div>
 
-                    {/* Stat Card 2 - Today's Visitors */}
+                    {/* Stat Card 2 - Registered Students */}
                     <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-3">
                       <div className="p-2.5 rounded-xl bg-purple-50 text-purple-700">
-                        <Eye className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">Hari Ini</span>
-                        <span className="text-lg font-extrabold text-slate-900">352</span>
-                        <span className="text-[8px] text-indigo-500 font-bold block">● Live Update</span>
-                      </div>
-                    </div>
-
-                    {/* Stat Card 3 - Monthly Visitors */}
-                    <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-3">
-                      <div className="p-2.5 rounded-xl bg-sky-50 text-sky-700">
-                        <Globe className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">Bulan Ini</span>
-                        <span className="text-lg font-extrabold text-slate-900">4,820</span>
-                        <span className="text-[8px] text-slate-400 block">Unique Visitors</span>
-                      </div>
-                    </div>
-
-                    {/* Stat Card 4 - Registered Students */}
-                    <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-3">
-                      <div className="p-2.5 rounded-xl bg-navy-50 text-navy-800">
                         <Users className="h-5 w-5" />
                       </div>
                       <div>
-                        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">Calon Taruna</span>
+                        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">Calon Mahasiswa Baru</span>
                         <span className="text-lg font-extrabold text-slate-900">{applications.length}</span>
                         <span className="text-[8px] text-amber-500 font-bold block">{applications.filter(a => a.status === 'Pending').length} Pending</span>
                       </div>
                     </div>
 
-                    {/* Stat Card 5 - Published News */}
+                    {/* Stat Card 3 - Total Berita */}
                     <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-3">
                       <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-700">
                         <Sparkles className="h-5 w-5" />
                       </div>
                       <div>
-                        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">Artikel Berita</span>
+                        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">Total Berita</span>
                         <span className="text-lg font-extrabold text-slate-900">{newsItems.length}</span>
-                        <span className="text-[8px] text-emerald-600 font-bold block">Aktif Publik</span>
+                        <span className="text-[8px] text-slate-400 block">Katalog Berita</span>
                       </div>
                     </div>
 
-                    {/* Stat Card 6 - Gallery Photos */}
+                    {/* Stat Card 4 - Total Banners */}
+                    <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-3">
+                      <div className="p-2.5 rounded-xl bg-sky-50 text-sky-700">
+                        <Image className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">Total Banner Promosi</span>
+                        <span className="text-lg font-extrabold text-slate-900">{banners.length}</span>
+                        <span className="text-[8px] text-indigo-500 font-bold block">Aktif Slides</span>
+                      </div>
+                    </div>
+
+                    {/* Stat Card 5 - Store Products */}
                     <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-3">
                       <div className="p-2.5 rounded-xl bg-amber-50 text-amber-700">
-                        <Camera className="h-5 w-5" />
+                        <ShoppingBag className="h-5 w-5" />
                       </div>
                       <div>
-                        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">Foto Galeri</span>
-                        <span className="text-lg font-extrabold text-slate-900">{galleryItems.length}</span>
-                        <span className="text-[8px] text-slate-400 block">Katalog Media</span>
+                        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">Total Produk Store</span>
+                        <span className="text-lg font-extrabold text-slate-900">{storeProducts.length}</span>
+                        <span className="text-[8px] text-amber-600 block">Atribut & Merchandise</span>
                       </div>
                     </div>
 
-                    {/* Stat Card 7 - Facilities */}
+                    {/* Stat Card 6 - Store Orders */}
                     <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-3">
                       <div className="p-2.5 rounded-xl bg-rose-50 text-rose-700">
-                        <Wrench className="h-5 w-5" />
+                        <FileText className="h-5 w-5" />
                       </div>
                       <div>
-                        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">Fasilitas Kampus</span>
-                        <span className="text-lg font-extrabold text-slate-900">{facilities.length}</span>
-                        <span className="text-[8px] text-rose-500 font-bold block">Lab & Simulator</span>
+                        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">Total Pesanan Store</span>
+                        <span className="text-lg font-extrabold text-slate-900">{storeOrders.length}</span>
+                        <span className="text-[8px] text-rose-500 font-bold block">{storeOrders.filter(o => o.status === 'Pending').length} Pending</span>
+                      </div>
+                    </div>
+
+                    {/* Stat Card 7 - Announcements */}
+                    <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-3">
+                      <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-700">
+                        <Bell className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">Total Pengumuman</span>
+                        <span className="text-lg font-extrabold text-slate-900">{announcements.length}</span>
+                        <span className="text-[8px] text-slate-400 block">Informasi Taruna</span>
                       </div>
                     </div>
 
                     {/* Stat Card 8 - Alumni */}
                     <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-3">
-                      <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-700">
+                      <div className="p-2.5 rounded-xl bg-teal-50 text-teal-700">
                         <GraduationCap className="h-5 w-5" />
                       </div>
                       <div>
-                        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">Kisah Alumni</span>
+                        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">Total Kisah Alumni</span>
                         <span className="text-lg font-extrabold text-slate-900">{alumniItems.length}</span>
-                        <span className="text-[8px] text-indigo-500 font-bold block">Tampil Publik</span>
+                        <span className="text-[8px] text-indigo-500 font-bold block">Tampil Beranda</span>
+                      </div>
+                    </div>
+
+                    {/* Stat Card 9 - Total Agenda */}
+                    <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-3">
+                      <div className="p-2.5 rounded-xl bg-cyan-50 text-cyan-700">
+                        <Calendar className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">Total Agenda</span>
+                        <span className="text-lg font-extrabold text-slate-900">{timelineEvents?.length || 0}</span>
+                        <span className="text-[8px] text-slate-400 block">Jadwal & Kegiatan</span>
+                      </div>
+                    </div>
+
+                    {/* Stat Card 10 - Total Galeri */}
+                    <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-3">
+                      <div className="p-2.5 rounded-xl bg-orange-50 text-orange-700">
+                        <Image className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">Total Galeri</span>
+                        <span className="text-lg font-extrabold text-slate-900">{galleryItems?.length || 0}</span>
+                        <span className="text-[8px] text-slate-400 block">Dokumentasi Foto</span>
+                      </div>
+                    </div>
+
+                    {/* Stat Card 11 - Total Program Studi */}
+                    <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-3">
+                      <div className="p-2.5 rounded-xl bg-pink-50 text-pink-700">
+                        <GraduationCap className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">Total Program Studi</span>
+                        <span className="text-lg font-extrabold text-slate-900">{programs?.length || 0}</span>
+                        <span className="text-[8px] text-pink-500 font-bold block">Aktif Akademik</span>
+                      </div>
+                    </div>
+
+                    {/* Stat Card 12 - Total Fasilitas */}
+                    <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-3">
+                      <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-700">
+                        <Settings className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">Total Fasilitas</span>
+                        <span className="text-lg font-extrabold text-slate-900">{facilities?.length || 0}</span>
+                        <span className="text-[8px] text-slate-400 block">Simulator & Lab</span>
                       </div>
                     </div>
                   </div>
@@ -1439,7 +1584,7 @@ export default function AdminPanel({
                           
                           {/* Tab Switchers */}
                           <div className="flex flex-wrap gap-1 bg-slate-50 p-1 rounded-xl border border-slate-100">
-                            {(['visitors', 'pmb', 'news', 'gallery'] as const).map((chartType) => (
+                            {(['visitors', 'pmb', 'news', 'agenda', 'gallery'] as const).map((chartType) => (
                               <button
                                 key={chartType}
                                 onClick={() => setActiveChart(chartType)}
@@ -1452,6 +1597,7 @@ export default function AdminPanel({
                                 {chartType === 'visitors' && 'Pengunjung'}
                                 {chartType === 'pmb' && 'Pendaftar'}
                                 {chartType === 'news' && 'Berita'}
+                                {chartType === 'agenda' && 'Agenda'}
                                 {chartType === 'gallery' && 'Galeri'}
                               </button>
                             ))}
@@ -1636,6 +1782,42 @@ export default function AdminPanel({
                               </div>
                             </div>
                           )}
+
+                          {/* Chart 5: Agenda Timeline Chart */}
+                          {activeChart === 'agenda' && (
+                            <div className="space-y-2 animate-fade-in">
+                              <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                                <span>Distribusi Agenda Kegiatan & Ujian</span>
+                                <span className="text-cyan-700 font-mono">Total Agenda: {timelineEvents?.length || 0} Jadwal</span>
+                              </div>
+                              <div className="relative h-28 w-full flex items-end justify-around px-4 pt-4">
+                                {/* Bar 1 - PMB */}
+                                <div className="flex flex-col items-center w-12 space-y-1">
+                                  <span className="text-[8px] font-bold font-mono text-slate-600">40%</span>
+                                  <div className="w-6 bg-cyan-600 rounded-t h-16" />
+                                  <span className="text-[8px] text-slate-400 font-bold truncate max-w-full">Ujian PMB</span>
+                                </div>
+                                {/* Bar 2 - Akademik */}
+                                <div className="flex flex-col items-center w-12 space-y-1">
+                                  <span className="text-[8px] font-bold font-mono text-slate-600">30%</span>
+                                  <div className="w-6 bg-amber-500 rounded-t h-12" />
+                                  <span className="text-[8px] text-slate-400 font-bold truncate max-w-full">Akademik</span>
+                                </div>
+                                {/* Bar 3 - Simulator */}
+                                <div className="flex flex-col items-center w-12 space-y-1">
+                                  <span className="text-[8px] font-bold font-mono text-slate-600">20%</span>
+                                  <div className="w-6 bg-emerald-500 rounded-t h-8" />
+                                  <span className="text-[8px] text-slate-400 font-bold truncate max-w-full">Simulator</span>
+                                </div>
+                                {/* Bar 4 - Wisuda */}
+                                <div className="flex flex-col items-center w-12 space-y-1">
+                                  <span className="text-[8px] font-bold font-mono text-slate-600">10%</span>
+                                  <div className="w-6 bg-slate-500 rounded-t h-4" />
+                                  <span className="text-[8px] text-slate-400 font-bold truncate max-w-full">Upacara</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                           
                         </div>
                       </div>
@@ -1769,7 +1951,21 @@ export default function AdminPanel({
 
                         {/* Terminal Style Stream */}
                         <div className="font-mono text-[10px] text-slate-300 space-y-3 max-h-56 overflow-y-auto">
-                          <div className="space-y-0.5">
+                          {/* Live Dynamic Logs */}
+                          {activityLogs && activityLogs.length > 0 && (
+                            <div className="space-y-3">
+                              {activityLogs.slice().reverse().map(log => (
+                                <div key={log.id} className="space-y-0.5 border-l-2 border-gold-500 pl-2">
+                                  <span className="text-gold-400">[{log.timestamp}]</span>{' '}
+                                  <span className="text-rose-400">[{log.role.toUpperCase()}]</span>{' '}
+                                  <span className="text-white font-bold">{log.user}: {log.action}</span>
+                                  <p className="text-[9px] text-slate-400 mt-0.5">{log.details}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="space-y-0.5 pt-2 border-t border-slate-800">
                             <span className="text-gray-500">[12:45:10]</span>{' '}
                             <span className="text-indigo-400">[SYSTEM]</span>{' '}
                             <span>Server initialized successfully on port 3000.</span>
@@ -3537,7 +3733,7 @@ export default function AdminPanel({
               )}
 
               {/* Tab: Kalender Akademik */}
-              {activeTab === 'kalender' && (
+              {activeTab === 'calendar' && (
                 <div className="space-y-6 animate-fade-in text-xs text-slate-700">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
@@ -4401,7 +4597,23 @@ export default function AdminPanel({
                   </div>
                 </div>
               )}
-              {(activeTab === 'alumni' || activeTab === 'seo' || activeTab === 'users' || activeTab === 'media' || activeTab === 'logs') && (
+              {(activeTab === 'alumni' ||
+                activeTab === 'testimonials' ||
+                activeTab === 'seo' ||
+                activeTab === 'users' ||
+                activeTab === 'media' ||
+                activeTab === 'logs' ||
+                activeTab === 'news_categories' ||
+                activeTab === 'announcements' ||
+                activeTab === 'banners' ||
+                activeTab === 'popup' ||
+                activeTab === 'runningText' ||
+                activeTab === 'store_products' ||
+                activeTab === 'store_orders' ||
+                activeTab === 'contact' ||
+                activeTab === 'admin' ||
+                activeTab === 'website_config' ||
+                activeTab === 'sections_builder') && (
                 <AdminPanelExtensions
                   activeTab={activeTab}
                   alumniItems={alumniItems}
@@ -4414,6 +4626,26 @@ export default function AdminPanel({
                   onUpdateMedia={onUpdateMedia}
                   activityLogs={activityLogs}
                   onUpdateLogs={onUpdateLogs}
+                  banners={banners}
+                  onUpdateBanners={onUpdateBanners}
+                  popupPromo={popupPromo}
+                  onUpdatePopupPromo={onUpdatePopupPromo}
+                  runningTexts={runningTexts}
+                  onUpdateRunningTexts={onUpdateRunningTexts}
+                  announcements={announcements}
+                  onUpdateAnnouncements={onUpdateAnnouncements}
+                  storeProducts={storeProducts}
+                  onUpdateStoreProducts={onUpdateStoreProducts}
+                  storeOrders={storeOrders}
+                  onUpdateStoreOrders={onUpdateStoreOrders}
+                  newsItems={newsItems}
+                  onUpdateNews={onUpdateNews}
+                  content={content}
+                  onUpdateContent={onUpdateContent}
+                  images={images}
+                  onUpdateImages={onUpdateImages}
+                  sections={sections}
+                  onUpdateSections={onUpdateSections}
                 />
               )}
 

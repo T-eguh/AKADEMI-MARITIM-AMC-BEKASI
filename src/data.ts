@@ -3,7 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { WebsiteImage, StatItem, ProgramItem, FacilityItem, GalleryItem, NewsItem, TestimonialItem, SiteContent, TimelineEvent, LecturerItem, CalendarEventItem } from './types';
+import { 
+  WebsiteImage, StatItem, ProgramItem, FacilityItem, GalleryItem, NewsItem, TestimonialItem, SiteContent, 
+  TimelineEvent, LecturerItem, CalendarEventItem, BannerPromoItem, PopupPromoConfig, RunningTextConfig, 
+  AnnouncementItem, StoreProduct, StoreOrder 
+} from './types';
 
 export const DEFAULT_IMAGES: WebsiteImage[] = [
   {
@@ -364,7 +368,7 @@ export const DEFAULT_CONTENT: SiteContent = {
   }
 };
 
-import { AlumniItem, SEOSettings, UserItem, MediaItem, ActivityLogItem } from './types';
+import { AlumniItem, SEOSettings, UserItem, MediaItem, ActivityLogItem, PageSectionConfig } from './types';
 
 export const DEFAULT_ALUMNI: AlumniItem[] = [
   {
@@ -716,5 +720,176 @@ export const DEFAULT_PMB_CONFIG = {
     }
   ]
 };
+
+export const DEFAULT_BANNERS: BannerPromoItem[] = [
+  {
+    id: 'banner_1',
+    title: 'Penerimaan Taruna Baru (PMB) Gelombang II',
+    description: 'Bergabunglah bersama Akademi Maritim Cirebon Bekasi dan raih karir cemerlang di industri kemaritiman global! Dapatkan potongan uang pangkal dan beasiswa menarik.',
+    imageUrl: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=1200',
+    targetLink: '#pmb',
+    startDate: '2026-06-01',
+    endDate: '2026-08-15',
+    isActive: true,
+    category: 'PMB'
+  },
+  {
+    id: 'banner_2',
+    title: 'Beasiswa Khusus Anak Pelaut & Prestasi Akademik',
+    description: 'Wujud kepedulian AMC Bekasi terhadap generasi penerus bangsa. Potongan biaya SPP dan asrama penuh bagi putra-putri pelaut serta lulusan SMA berprestasi.',
+    imageUrl: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&q=80&w=1200',
+    targetLink: '#biaya-pmb',
+    startDate: '2026-06-01',
+    endDate: '2026-09-01',
+    isActive: true,
+    category: 'Beasiswa'
+  },
+  {
+    id: 'banner_3',
+    title: 'Seminar Nasional Kemaritiman & Navigasi Modern',
+    description: 'Menghadirkan pembicara ahli dari Kementerian Perhubungan Laut dan praktisi industri pelayaran internasional. Terbuka untuk umum.',
+    imageUrl: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&q=80&w=1200',
+    targetLink: '#agenda',
+    startDate: '2026-06-15',
+    endDate: '2026-07-12',
+    isActive: true,
+    category: 'Seminar'
+  }
+];
+
+export const DEFAULT_POPUP: PopupPromoConfig = {
+  id: 'popup_pmb_2026',
+  title: 'Penerimaan Taruna Baru Gelombang II',
+  description: 'Dapatkan kesempatan Beasiswa Uang Pangkal hingga 50% dan jaminan penempatan praktek laut di maskapai pelayaran mitra AMC Bekasi. Pendaftaran online sangat mudah dan cepat!',
+  imageUrl: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?auto=format&fit=crop&q=80&w=800',
+  actionLink: '#pmb',
+  actionText: 'Daftar Sekarang',
+  isActive: true
+};
+
+export const DEFAULT_RUNNING_TEXTS: RunningTextConfig[] = [
+  { id: 'rt_1', text: '📢 Pendaftaran Gelombang II Penerimaan Taruna Baru AMC Bekasi Tahun Akademik 2026/2027 Telah Dibuka hingga 15 Agustus 2026!', isActive: true },
+  { id: 'rt_2', text: '📢 Beasiswa Khusus Anak Pelaut dan Beasiswa Prestasi Akademik masih dibuka, kuota terbatas!', isActive: true },
+  { id: 'rt_3', text: '📢 Selamat dan Sukses atas Pelantikan Taruna Tingkat III untuk Praktek Laut (PRALA) di kapal-kapal niaga nasional dan asing.', isActive: true }
+];
+
+export const DEFAULT_ANNOUNCEMENTS: AnnouncementItem[] = [
+  {
+    id: 'ann_1',
+    title: 'Pengumuman Hasil Seleksi Berkas Calon Taruna (Catar) Gelombang I',
+    content: '<p>Berdasarkan hasil rapat Panitia Penerimaan Taruna Baru (PMB) Akademi Maritim Cirebon Bekasi Tahun Akademik 2026/2027, berikut diumumkan daftar nama calon taruna yang dinyatakan <strong>LOLOS Seleksi Administrasi Tahap I</strong>.</p><p>Calon taruna yang lolos diwajibkan untuk mengikuti tes kesehatan fisik dan wawancara kesamaptaan yang akan dilaksanakan pada tanggal 10 Juli 2026 bertempat di Kampus Utama AMC Bekasi.</p><p>Daftar lengkap kelulusan dan rincian jadwal tes dapat diunduh melalui tombol lampiran di bawah ini. Harap mengenakan pakaian kemeja putih celana hitam rapi dan bersepatu hitam pantofel saat tes.</p>',
+    date: '27 Juni 2026',
+    status: 'published',
+    category: 'PMB'
+  },
+  {
+    id: 'ann_2',
+    title: 'Jadwal Pelaksanaan Ospek & Masa Dasar Pembentukan Karakter Taruna (Madatukar)',
+    content: '<p>Diberitahukan kepada seluruh calon taruna/taruni yang telah melakukan registrasi ulang bahwa kegiatan <strong>Masa Dasar Pembentukan Karakter Taruna (Madatukar) Angkatan 2026</strong> akan dilaksanakan secara semi-militer di Pusat Latihan Kesamaptaan.</p><p>Kegiatan akan berlangsung selama 2 minggu penuh mulai tanggal 1 September sampai 14 September 2026. Seluruh perlengkapan wajib dikemas dalam tas punggung standar sesuai instruksi panitia penanggung jawab asrama.</p><p>Buku panduan pelaksanaan, daftar barang bawaan yang dilarang, serta surat izin orang tua dapat diakses pada halaman pengumuman detail di sekretariat senat taruna.</p>',
+    date: '25 Juni 2026',
+    status: 'published',
+    category: 'Akademik'
+  },
+  {
+    id: 'ann_3',
+    title: 'Pemberitahuan Pembayaran SPP dan Registrasi Semester Ganjil TA 2026/2027',
+    content: '<p>Menjelang dimulainya perkuliahan Semester Ganjil Tahun Akademik 2026/2027, diimbau kepada seluruh Taruna aktif Tingkat II dan Tingkat III untuk melakukan registrasi administrasi dan pembayaran SPP semester.</p><p>Batas akhir pembayaran tanpa denda jatuh pada tanggal 20 Agustus 2026. Pembayaran dapat disalurkan melalui transfer bank resmi Virtual Account Mandiri atas nama AMC Bekasi.</p><p>Bagi penerima program beasiswa yayasan atau beasiswa eksternal, diharap segera menyerahkan laporan indeks prestasi semester terakhir ke bagian administrasi akademik (BAAK) guna pencairan dana beasiswa.</p>',
+    date: '18 Juni 2026',
+    status: 'published',
+    category: 'Keuangan'
+  }
+];
+
+export const DEFAULT_PRODUCTS: StoreProduct[] = [
+  {
+    id: 'prod_1',
+    name: 'Jas Almamater Resmi AMC Bekasi',
+    price: 385000,
+    description: 'Jas Almamater resmi Akademi Maritim Cirebon Bekasi berwarna Navy Blue premium. Dilengkapi dengan kancing kuningan berlogo jangkar AMC dan bordir komputer presisi tinggi di dada kiri. Bahan kain Twist premium yang tebal namun tetap dingin dan nyaman dipakai saat upacara maupun kegiatan resmi kampus.',
+    stock: 85,
+    category: 'Jas Almamater',
+    images: [
+      'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1598808503742-dd34ab044c99?auto=format&fit=crop&q=80&w=600'
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&q=80&w=600'
+  },
+  {
+    id: 'prod_2',
+    name: 'Kaos Polo Taruna AMC Navy',
+    price: 125000,
+    description: 'Kaos Polo berkerah casual eksklusif edisi Taruna AMC Bekasi. Terbuat dari bahan Cotton Lacoste CVC 24s berkualitas tinggi yang menyerap keringat. Dilengkapi dengan bordir logo kompas-jangkar AMC di dada kiri dan tulisan "CADET" di lengan kanan. Sangat gagah untuk kuliah harian santai maupun kegiatan luar ruangan.',
+    stock: 140,
+    category: 'Kaos',
+    images: [
+      'https://images.unsplash.com/photo-1581655353564-df123a1eb820?auto=format&fit=crop&q=80&w=600'
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?auto=format&fit=crop&q=80&w=600'
+  },
+  {
+    id: 'prod_3',
+    name: 'Topi Pet Upacara Resmi Taruna',
+    price: 175000,
+    description: 'Topi Pet (Cap) upacara kedinasan resmi untuk taruna/taruni AMC Bekasi. Dibuat dengan presisi tinggi menggunakan bahan beludru halus berkualitas tinggi, bordir emas tebal untuk lencana kompas maritim, dan strap kulit hitam berkilap di bagian depan. Tersedia dalam berbagai ukuran lingkar kepala.',
+    stock: 32,
+    category: 'Topi',
+    images: [
+      'https://images.unsplash.com/photo-1534215748734-18e55daf447d?auto=format&fit=crop&q=80&w=600'
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1534215748734-18e55daf447d?auto=format&fit=crop&q=80&w=600'
+  },
+  {
+    id: 'prod_4',
+    name: 'Buku Panduan Navigasi Dasar Laut',
+    price: 95000,
+    description: 'Buku ajar dan modul panduan navigasi laut praktis untuk kadet pelayaran niaga karangan tim instruktur senior AMC Bekasi. Membahas teknik pembacaan peta laut, penentuan arah angin, penggunaan kompas magnetik, radar ARPA, serta prosedur keselamatan pelayaran internasional (SOLAS). Wajib dimiliki mahasiswa Nautika.',
+    stock: 65,
+    category: 'Buku',
+    images: [
+      'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&q=80&w=600'
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&q=80&w=600'
+  },
+  {
+    id: 'prod_5',
+    name: 'Mug Keramik Eksklusif AMC Bekasi',
+    price: 45000,
+    description: 'Mug keramik premium berlogo emas Akademi Maritim Cirebon Bekasi dengan finishing gloss mengkilap. Tahan panas microwave, sangat cocok untuk menemani belajar atau minum kopi di sela-sela waktu jaga kapal. Menjadi merchandise terlaris bagi alumni kampus.',
+    stock: 180,
+    category: 'Mug',
+    images: [
+      'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&q=80&w=600'
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&q=80&w=600'
+  },
+  {
+    id: 'prod_6',
+    name: 'Jaket Bomber Maritim Waterproof',
+    price: 245000,
+    description: 'Jaket bomber dengan bahan taslan balon waterproof (anti air) dan windbreaker (tahan angin kencang) yang didesain khusus untuk taruna saat berada di atas dek kapal. Dilengkapi furing dacron hangat di bagian dalam, saku rahasia, serta emblem velcro berlogo bendera Indonesia dan AMC Bekasi.',
+    stock: 48,
+    category: 'Jaket',
+    images: [
+      'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&q=80&w=600'
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&q=80&w=600'
+  }
+];
+
+export const DEFAULT_SECTIONS: PageSectionConfig[] = [
+  { id: 'hero', name: 'Banner Hero Selamat Datang', label: 'Hero Banner', isEnabled: true, order: 1 },
+  { id: 'banners', name: 'Banner Promosi / Iklan Kampus', label: 'Promo Banner', isEnabled: true, order: 2 },
+  { id: 'about', name: 'Sejarah Singkat & Visi Misi', label: 'Profil Singkat', isEnabled: true, order: 3 },
+  { id: 'stats', name: 'Statistik Capaian Kampus', label: 'Milestone Kampus', isEnabled: true, order: 4 },
+  { id: 'programs', name: 'Program Studi Terakreditasi', label: 'Program Studi', isEnabled: true, order: 5 },
+  { id: 'facilities', name: 'Fasilitas & Lab Simulator', label: 'Fasilitas Kampus', isEnabled: true, order: 6 },
+  { id: 'gallery', name: 'Galeri Kegiatan & Dokumentasi', label: 'Galeri Kampus', isEnabled: true, order: 7 },
+  { id: 'news', name: 'Berita Terbaru & Artikel Pengumuman', label: 'Berita Kampus', isEnabled: true, order: 8 },
+  { id: 'pmb', name: 'Form Pendaftaran Online (PMB)', label: 'Pendaftaran PMB', isEnabled: true, order: 9 },
+  { id: 'testimonials', name: 'Testimoni Lulusan / Alumni', label: 'Testimoni Alumni', isEnabled: true, order: 10 },
+  { id: 'contact', name: 'Kontak Informasi & Google Maps', label: 'Kontak & Lokasi', isEnabled: true, order: 11 }
+];
+
+
 
 

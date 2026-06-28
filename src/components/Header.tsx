@@ -29,7 +29,9 @@ import {
   Milestone,
   Target,
   BookOpen,
-  Users
+  Users,
+  Bell,
+  ShoppingBag
 } from 'lucide-react';
 import { WebsiteImage } from '../types';
 import TransparentLogo from './TransparentLogo';
@@ -137,6 +139,7 @@ export default function Header({
     label: lang === 'en' ? 'About' : 'Tentang',
     id: 'tentang' as const,
     items: [
+      { label: lang === 'en' ? 'Announcements' : 'Pengumuman', path: '/pengumuman', icon: Bell },
       { label: lang === 'en' ? 'Facilities' : 'Fasilitas', path: '/fasilitas', icon: Building2 },
       { label: lang === 'en' ? 'Gallery' : 'Galeri', path: '/galeri', icon: Image },
       { label: lang === 'en' ? 'News' : 'Berita', path: '/berita', icon: Newspaper },
@@ -389,6 +392,24 @@ export default function Header({
             >
               {lang === 'en' ? 'Contact' : 'Kontak'}
               {activeSection === 'contact' && (
+                <span className={`absolute bottom-0 left-0 w-full h-0.5 rounded-full ${
+                  isScrolled ? 'bg-navy-800' : 'bg-gold-400'
+                }`} />
+              )}
+            </button>
+
+            {/* AMC Store */}
+            <button
+              onClick={() => handleLinkClick('/store')}
+              className={`font-sans font-medium text-sm transition-colors relative py-1 hover:text-gold-500 cursor-pointer flex items-center space-x-1 ${
+                activeSection === 'store'
+                  ? isScrolled ? 'text-navy-800 font-semibold' : 'text-gold-400 font-semibold'
+                  : isScrolled ? 'text-gray-700' : 'text-gray-100'
+              }`}
+            >
+              <ShoppingBag className="h-4 w-4 shrink-0 text-gold-500" />
+              <span>AMC Store</span>
+              {activeSection === 'store' && (
                 <span className={`absolute bottom-0 left-0 w-full h-0.5 rounded-full ${
                   isScrolled ? 'bg-navy-800' : 'bg-gold-400'
                 }`} />
@@ -653,6 +674,17 @@ export default function Header({
               }`}
             >
               {lang === 'en' ? 'Contact' : 'Kontak'}
+            </button>
+
+            {/* AMC Store Mobile */}
+            <button
+              onClick={() => handleLinkClick('/store')}
+              className={`text-left font-sans font-semibold py-2.5 border-b border-gray-50 hover:text-navy-800 transition-colors cursor-pointer flex items-center space-x-2 ${
+                activeSection === 'store' ? 'text-navy-800 pl-2 border-l-2 border-navy-800' : 'text-gray-600'
+              }`}
+            >
+              <ShoppingBag className="h-4.5 w-4.5 text-gold-500 shrink-0" />
+              <span>AMC Store</span>
             </button>
 
             {/* CTA Pendaftaran */}

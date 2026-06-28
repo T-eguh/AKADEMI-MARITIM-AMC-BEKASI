@@ -44,10 +44,10 @@ export default function Contact({ contact }: ContactProps) {
   };
 
   // Pre-configured contact channels falling back to dynamic settings
-  const phoneVal = contact?.phone || '+62 21 8899 7766';
-  const whatsappVal = contact?.whatsapp || '+62 812 3456 7890';
-  const emailVal = contact?.email || 'info@amcbekasi.ac.id';
-  const addressVal = contact?.address || 'Jl. Kemakmuran No. 45, Marga Jaya, Bekasi Selatan, Kota Bekasi, Jawa Barat 17141';
+  const phoneVal = contact?.phone || '0813 8321 444';
+  const whatsappVal = contact?.whatsapp || '0853-2683-9619';
+  const emailVal = contact?.email || 'amc.cirebon@gmail.com';
+  const addressVal = contact?.address || ' Jl. Gombang, Kp. Kalen Keramat RT.003/RW.003, Desa Sukawangi, Kecamatan Sukawangi, Kabupaten Bekasi, Provinsi Jawa Barat, Kode Pos 17620';
 
   // Format WhatsApp Link
   const cleanWa = whatsappVal.replace(/[^0-9]/g, '');
@@ -261,7 +261,7 @@ export default function Contact({ contact }: ContactProps) {
         {/* Embedded Google Map */}
         <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden p-3 h-96">
           <iframe
-            src={contact?.googleMapsEmbed || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126907.0396009893!2d106.94586326442654!3d-6.284157155681123!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e698e14b6fc52e7%3A0xc3f10118eb3090ef!2sKota%20Bks%2C%20Jawa%20Barat!5e0!3m2!1sid!2sid!4v1719234567890!5m2!1sid!2sid"}
+            src={contact?.googleMapsEmbed || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d495.8829386569014!2d107.12968842341346!3d-6.12215484573171!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e6a292a6bf65303%3A0xa775a1b59bb4b158!2sAMC%20BEKASI!5e0!3m2!1sid!2sid!4v1782630632796!5m2!1sid!2sid"}
             title="Lokasi Kampus AMC Bekasi"
             width="100%"
             height="100%"

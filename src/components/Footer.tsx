@@ -57,9 +57,9 @@ export default function Footer({
   const igUrl = socialMedia?.instagram || 'https://www.instagram.com/amc.bekasi/';
   const ytUrl = socialMedia?.tiktok|| 'https://www.tiktok.com/@galeri.amc.bekasi?_t=8miZ7VYFCaO&_r=1';
 
-  const skKemenkumham = campusProfile?.skKemenkumham || 'AHU-001245.AH.01.04.2021';
-  const izinHubla = campusProfile?.izinHubla || 'PK.303/12/4/DK-2023';
-  const izinKemendikbud = campusProfile?.izinKemendikbud || 'No. 235/E/O/2022';
+  const skKemenkumham = campusProfile?.skKemenkumham || 'Nomor SK  : 134/D/O/1993';
+  const izinHubla = campusProfile?.izinHubla || 'Nomor SK Awal: No. B/34.D.L.301/PDL-9';
+  const izinKemendikbud = campusProfile?.izinKemendikbud || 'Nomor SK: 143/D/O/1993';
 
   return (
     <footer className="bg-gradient-to-b from-[#001B3A] to-[#003B7A] text-white pt-16 pb-8 border-t border-blue-500/15 shadow-[0_-15px_40px_rgba(0,100,255,0.1)] font-sans">

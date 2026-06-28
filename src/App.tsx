@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   WebsiteImage, SiteContent, NewsItem, PMBApplication, FacilityItem, GalleryItem,
   AlumniItem, SEOSettings, UserItem, MediaItem, ActivityLogItem, TimelineEvent, LecturerItem, CalendarEventItem,
-  ProgramItem, PMBConfig
+  ProgramItem, PMBConfig, BannerPromoItem, PopupPromoConfig, RunningTextConfig, AnnouncementItem, StoreProduct, StoreOrder, PageSectionConfig
 } from './types';
 import {
   DEFAULT_IMAGES,
@@ -26,7 +26,13 @@ import {
   DEFAULT_TIMELINE,
   DEFAULT_LECTURERS,
   DEFAULT_CALENDAR,
-  DEFAULT_PMB_CONFIG
+  DEFAULT_PMB_CONFIG,
+  DEFAULT_BANNERS,
+  DEFAULT_POPUP,
+  DEFAULT_RUNNING_TEXTS,
+  DEFAULT_ANNOUNCEMENTS,
+  DEFAULT_PRODUCTS,
+  DEFAULT_SECTIONS
 } from './data';
 
 // Import all modular sub-components
@@ -43,6 +49,15 @@ import Testimonials from './components/Testimonials';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 import AdminPanel from './components/AdminPanel';
+
+// New Custom Applet Features
+import PromoBanner from './components/PromoBanner';
+import PromoPopup from './components/PromoPopup';
+import FloatingButtons from './components/FloatingButtons';
+import AnnouncementsPage from './components/AnnouncementsPage';
+import StorePage from './components/StorePage';
+import RunningTextTicker from './components/RunningTextTicker';
+
 import AlumniDirectory from './components/AlumniDirectory';
 import ProgramDetails from './components/ProgramDetails';
 import ProfilePage from './components/ProfilePage';
@@ -373,16 +388,100 @@ export default function App() {
   });
 
   // ----------------------------------------------------
+  // New State Declarations for Promotional & E-commerce features
+  // ----------------------------------------------------
+  const [banners, setBanners] = useState<BannerPromoItem[]>(() => {
+    try {
+      const stored = localStorage.getItem('amc_banners');
+      return stored ? JSON.parse(stored) : DEFAULT_BANNERS;
+    } catch (e) {
+      console.error('Error parsing amc_banners:', e);
+      return DEFAULT_BANNERS;
+    }
+  });
+
+  const [popupPromo, setPopupPromo] = useState<PopupPromoConfig>(() => {
+    try {
+      const stored = localStorage.getItem('amc_popup_promo');
+      return stored ? JSON.parse(stored) : DEFAULT_POPUP;
+    } catch (e) {
+      console.error('Error parsing amc_popup_promo:', e);
+      return DEFAULT_POPUP;
+    }
+  });
+
+  const [runningTexts, setRunningTexts] = useState<RunningTextConfig[]>(() => {
+    try {
+      const stored = localStorage.getItem('amc_running_texts');
+      return stored ? JSON.parse(stored) : DEFAULT_RUNNING_TEXTS;
+    } catch (e) {
+      console.error('Error parsing amc_running_texts:', e);
+      return DEFAULT_RUNNING_TEXTS;
+    }
+  });
+
+  const [announcements, setAnnouncements] = useState<AnnouncementItem[]>(() => {
+    try {
+      const stored = localStorage.getItem('amc_announcements');
+      return stored ? JSON.parse(stored) : DEFAULT_ANNOUNCEMENTS;
+    } catch (e) {
+      console.error('Error parsing amc_announcements:', e);
+      return DEFAULT_ANNOUNCEMENTS;
+    }
+  });
+
+  const [storeProducts, setStoreProducts] = useState<StoreProduct[]>(() => {
+    try {
+      const stored = localStorage.getItem('amc_store_products');
+      return stored ? JSON.parse(stored) : DEFAULT_PRODUCTS;
+    } catch (e) {
+      console.error('Error parsing amc_store_products:', e);
+      return DEFAULT_PRODUCTS;
+    }
+  });
+
+  const [storeOrders, setStoreOrders] = useState<StoreOrder[]>(() => {
+    try {
+      const stored = localStorage.getItem('amc_store_orders');
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      console.error('Error parsing amc_store_orders:', e);
+      return [];
+    }
+  });
+
+  const [sections, setSections] = useState<PageSectionConfig[]>(() => {
+    try {
+      const stored = localStorage.getItem('amc_sections');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+      return DEFAULT_SECTIONS;
+    } catch (e) {
+      console.error('Error parsing amc_sections:', e);
+      return DEFAULT_SECTIONS;
+    }
+  });
+
+
+  // ----------------------------------------------------
   // Automatic Static Site Configuration Bootloader (amc_backup.json)
   // ----------------------------------------------------
   useEffect(() => {
     const loadConfig = async () => {
       try {
+        const isBackupLoaded = localStorage.getItem('amc_backup_loaded') === 'true';
+        if (isBackupLoaded) {
+          console.log('AMC Bekasi: Dynamic local storage config already loaded. Preserving custom user edits.');
+          setIsConfigLoading(false);
+          return;
+        }
+
         const res = await fetch('/amc_backup.json');
         if (res.ok) {
           const parsed = await res.json();
           if (parsed && typeof parsed === 'object') {
-            console.log('AMC Bekasi: Found custom config in amc_backup.json, loading as default/override...');
+            console.log('AMC Bekasi: First-time loading custom config from amc_backup.json...');
             if (parsed.images && Array.isArray(parsed.images)) {
               setImages(parsed.images);
               localStorage.setItem('amc_images', JSON.stringify(parsed.images));
@@ -439,6 +538,35 @@ export default function App() {
               setPmbConfig(parsed.pmbConfig);
               localStorage.setItem('amc_pmb_config', JSON.stringify(parsed.pmbConfig));
             }
+            if (parsed.banners && Array.isArray(parsed.banners)) {
+              setBanners(parsed.banners);
+              localStorage.setItem('amc_banners', JSON.stringify(parsed.banners));
+            }
+            if (parsed.popupPromo && typeof parsed.popupPromo === 'object') {
+              setPopupPromo(parsed.popupPromo);
+              localStorage.setItem('amc_popup_promo', JSON.stringify(parsed.popupPromo));
+            }
+            if (parsed.runningTexts && Array.isArray(parsed.runningTexts)) {
+              setRunningTexts(parsed.runningTexts);
+              localStorage.setItem('amc_running_texts', JSON.stringify(parsed.runningTexts));
+            }
+            if (parsed.announcements && Array.isArray(parsed.announcements)) {
+              setAnnouncements(parsed.announcements);
+              localStorage.setItem('amc_announcements', JSON.stringify(parsed.announcements));
+            }
+            if (parsed.storeProducts && Array.isArray(parsed.storeProducts)) {
+              setStoreProducts(parsed.storeProducts);
+              localStorage.setItem('amc_store_products', JSON.stringify(parsed.storeProducts));
+            }
+            if (parsed.storeOrders && Array.isArray(parsed.storeOrders)) {
+              setStoreOrders(parsed.storeOrders);
+              localStorage.setItem('amc_store_orders', JSON.stringify(parsed.storeOrders));
+            }
+            if (parsed.sections && Array.isArray(parsed.sections)) {
+              setSections(parsed.sections);
+              localStorage.setItem('amc_sections', JSON.stringify(parsed.sections));
+            }
+            localStorage.setItem('amc_backup_loaded', 'true');
           }
         }
       } catch (e) {
@@ -479,141 +607,82 @@ export default function App() {
   const [activeSection, setActiveSection] = useState('home');
 
   // ----------------------------------------------------
-  // Automatic Background Storage Optimizer to Prevent QuotaExceededError
-  // ----------------------------------------------------
-  useEffect(() => {
-    const compressBase64Image = (base64Str: string, maxWidth = 1280, maxHeight = 1280, quality = 0.8): Promise<string> => {
-      return new Promise((resolve) => {
-        if (!base64Str || !base64Str.startsWith('data:image')) {
-          resolve(base64Str);
-          return;
-        }
-        const img = new window.Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.naturalWidth || img.width || 500;
-          let height = img.naturalHeight || img.height || 500;
-
-          if (width > height) {
-            if (width > maxWidth) {
-              height = Math.round((height * maxWidth) / width);
-              width = maxWidth;
-            }
-          } else {
-            if (height > maxHeight) {
-              width = Math.round((width * maxHeight) / height);
-              height = maxHeight;
-            }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            resolve(base64Str);
-            return;
-          }
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, width, height);
-          ctx.drawImage(img, 0, 0, width, height);
-          try {
-            const compressed = canvas.toDataURL('image/jpeg', quality);
-            resolve(compressed);
-          } catch (e) {
-            resolve(base64Str);
-          }
-        };
-        img.onerror = () => {
-          resolve(base64Str);
-        };
-        img.src = base64Str;
-      });
-    };
-
-    const optimizeAllStates = async () => {
-      // 1. Optimize images state
-      let imagesUpdated = false;
-      const optimizedImages = await Promise.all(
-        images.map(async (img) => {
-          if (img.url && img.url.startsWith('data:image') && img.url.length > 60000) {
-            const compressed = await compressBase64Image(img.url);
-            imagesUpdated = true;
-            return { ...img, url: compressed };
-          }
-          return img;
-        })
-      );
-      if (imagesUpdated) {
-        setImages(optimizedImages);
-      }
-
-      // 2. Optimize facilities state
-      let facilitiesUpdated = false;
-      const optimizedFacilities = await Promise.all(
-        facilities.map(async (fac) => {
-          if (fac.imageUrl && fac.imageUrl.startsWith('data:image') && fac.imageUrl.length > 60000) {
-            const compressed = await compressBase64Image(fac.imageUrl);
-            facilitiesUpdated = true;
-            return { ...fac, imageUrl: compressed };
-          }
-          return fac;
-        })
-      );
-      if (facilitiesUpdated) {
-        setFacilities(optimizedFacilities);
-      }
-
-      // 3. Optimize gallery state
-      let galleryUpdated = false;
-      const optimizedGallery = await Promise.all(
-        galleryItems.map(async (gal) => {
-          if (gal.imageUrl && gal.imageUrl.startsWith('data:image') && gal.imageUrl.length > 60000) {
-            const compressed = await compressBase64Image(gal.imageUrl);
-            galleryUpdated = true;
-            return { ...gal, imageUrl: compressed };
-          }
-          return gal;
-        })
-      );
-      if (galleryUpdated) {
-        setGalleryItems(optimizedGallery);
-      }
-
-      // 4. Optimize news state
-      let newsUpdated = false;
-      const optimizedNews = await Promise.all(
-        newsItems.map(async (news) => {
-          if (news.imageUrl && news.imageUrl.startsWith('data:image') && news.imageUrl.length > 60000) {
-            const compressed = await compressBase64Image(news.imageUrl);
-            newsUpdated = true;
-            return { ...news, imageUrl: compressed };
-          }
-          return news;
-        })
-      );
-      if (newsUpdated) {
-        setNewsItems(optimizedNews);
-      }
-    };
-
-    // Delay optimization to 1.5 seconds after start so we don't interfere with the page load
-    const timer = setTimeout(() => {
-      optimizeAllStates().catch((err) => console.warn('Background optimization error:', err));
-    }, 1500);
-
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
+  // Automatic Background Storage Optimizer removed to ensure high-fidelity image retention
   // ----------------------------------------------------
   // Synchronization Effects
   // ----------------------------------------------------
   useEffect(() => {
-    try {
-      localStorage.setItem('amc_images', JSON.stringify(images));
-    } catch (e) {
-      console.warn('Gagal menyimpan gambar ke local storage (kemungkinan ukuran terlalu besar):', e);
-    }
+    const saveImagesWithSelfHealing = async () => {
+      try {
+        localStorage.setItem('amc_images', JSON.stringify(images));
+      } catch (e) {
+        console.warn('Gagal menyimpan gambar ke local storage, mencoba kompresi otomatis untuk menghemat ruang...', e);
+        
+        // Find user-uploaded base64 images that are large (e.g. > 150KB)
+        const base64Images = images.filter(img => img.url && img.url.startsWith('data:image/') && img.url.length > 150000);
+        
+        if (base64Images.length > 0) {
+          // Sort by length (largest first) to optimize the heaviest first
+          const sorted = [...base64Images].sort((a, b) => b.url.length - a.url.length);
+          const target = sorted[0];
+          
+          try {
+            const compressed = await new Promise<string>((resolve) => {
+              const imgEl = new window.Image();
+              imgEl.onload = () => {
+                const canvas = document.createElement('canvas');
+                // Target extremely safe smaller resolution for automatic fallback
+                const maxW = 1000;
+                const maxH = 1000;
+                let w = imgEl.naturalWidth || imgEl.width || 800;
+                let h = imgEl.naturalHeight || imgEl.height || 600;
+                
+                if (w > h) {
+                  if (w > maxW) {
+                    h = Math.round((h * maxW) / w);
+                    w = maxW;
+                  }
+                } else {
+                  if (h > maxH) {
+                    w = Math.round((w * maxH) / h);
+                    h = maxH;
+                  }
+                }
+                
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                  ctx.imageSmoothingEnabled = true;
+                  ctx.imageSmoothingQuality = 'high';
+                  ctx.fillStyle = '#ffffff';
+                  ctx.fillRect(0, 0, w, h);
+                  ctx.drawImage(imgEl, 0, 0, w, h);
+                  resolve(canvas.toDataURL('image/jpeg', 0.75)); // Compress to 75% quality JPEG
+                } else {
+                  resolve('');
+                }
+              };
+              imgEl.onerror = () => resolve('');
+              imgEl.src = target.url;
+            });
+            
+            if (compressed) {
+              const healed = images.map(img => img.id === target.id ? { ...img, url: compressed } : img);
+              setImages(healed);
+              console.log(`Auto-compressed image ${target.id} successfully from ${Math.round(target.url.length / 1024)}KB to ${Math.round(compressed.length / 1024)}KB.`);
+            }
+          } catch (errComp) {
+            console.error('Gagal melakukan auto-kompresi gambar:', errComp);
+          }
+        } else {
+          // If no large base64 images are left but it still fails, alert the user about other data limits
+          alert('⚠️ Memori penyimpanan browser penuh! Tidak dapat menyimpan gambar baru. Silakan hapus beberapa data transaksi atau logs di Admin Panel.');
+        }
+      }
+    };
+
+    saveImagesWithSelfHealing();
   }, [images]);
 
   useEffect(() => {
@@ -744,6 +813,63 @@ export default function App() {
     }
   }, [pmbConfig]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem('amc_banners', JSON.stringify(banners));
+    } catch (e) {
+      console.warn('Gagal menyimpan banners ke local storage:', e);
+    }
+  }, [banners]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('amc_popup_promo', JSON.stringify(popupPromo));
+    } catch (e) {
+      console.warn('Gagal menyimpan popup promo ke local storage:', e);
+    }
+  }, [popupPromo]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('amc_running_texts', JSON.stringify(runningTexts));
+    } catch (e) {
+      console.warn('Gagal menyimpan running texts ke local storage:', e);
+    }
+  }, [runningTexts]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('amc_announcements', JSON.stringify(announcements));
+    } catch (e) {
+      console.warn('Gagal menyimpan announcements ke local storage:', e);
+    }
+  }, [announcements]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('amc_store_products', JSON.stringify(storeProducts));
+    } catch (e) {
+      console.warn('Gagal menyimpan store products ke local storage:', e);
+    }
+  }, [storeProducts]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('amc_store_orders', JSON.stringify(storeOrders));
+    } catch (e) {
+      console.warn('Gagal menyimpan store orders ke local storage:', e);
+    }
+  }, [storeOrders]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('amc_sections', JSON.stringify(sections));
+    } catch (e) {
+      console.warn('Gagal menyimpan sections ke local storage:', e);
+    }
+  }, [sections]);
+
+
   // ----------------------------------------------------
   // Navigation & Page Routing
   // ----------------------------------------------------
@@ -775,6 +901,12 @@ export default function App() {
     } else if (target === 'contact' || target === 'Kontak' || target === '/kontak') {
       navigateTo('/kontak');
       setActiveSection('contact');
+    } else if (target === 'store' || target === '/store') {
+      navigateTo('/store');
+      setActiveSection('store');
+    } else if (target === 'pengumuman' || target === '/pengumuman') {
+      navigateTo('/pengumuman');
+      setActiveSection('pengumuman');
     } else if (target === 'nautika' || target === '/program-studi/nautika') {
       navigateTo('/program-studi/nautika');
       setActiveSection('programs');
@@ -786,6 +918,11 @@ export default function App() {
       setActiveSection('programs');
     } else if (target.startsWith('/')) {
       navigateTo(target);
+      if (target === '/store') {
+        setActiveSection('store');
+      } else if (target === '/pengumuman') {
+        setActiveSection('pengumuman');
+      }
     } else {
       navigateTo('/');
       setTimeout(() => {
@@ -815,17 +952,21 @@ export default function App() {
       setActiveSection('pmb');
     } else if (path === '/kontak') {
       setActiveSection('contact');
+    } else if (path === '/store') {
+      setActiveSection('store');
+    } else if (path === '/pengumuman') {
+      setActiveSection('pengumuman');
     }
   }, [currentPath]);
 
   useEffect(() => {
-    const sections = ['home', 'about', 'programs', 'facilities', 'gallery', 'news', 'pmb', 'contact'];
+    const trackingSections = ['home', 'about', 'programs', 'facilities', 'gallery', 'news', 'pmb', 'contact'];
     
     const handleScrollTracking = () => {
       if (window.location.pathname !== '/') return;
       const scrollPos = window.scrollY + window.innerHeight / 3;
       
-      for (const sectionId of sections) {
+      for (const sectionId of trackingSections) {
         const el = document.getElementById(sectionId);
         if (el) {
           const top = el.offsetTop;
@@ -861,9 +1002,11 @@ export default function App() {
       setUsers(DEFAULT_USERS);
       setMediaItems(DEFAULT_MEDIA);
       setActivityLogs(DEFAULT_LOGS);
+      setSections(DEFAULT_SECTIONS);
       setIsAdminLoggedIn(false);
       setIsAdminOpen(false);
       localStorage.clear();
+      localStorage.setItem('amc_backup_loaded', 'true');
       alert('Semua konfigurasi berhasil di-reset ke default.');
     }
   };
@@ -985,6 +1128,9 @@ export default function App() {
         onChangeLang={setLang}
       />
 
+      {/* Running Text Ticker */}
+      <RunningTextTicker configs={runningTexts} />
+
       {/* Global Breadcrumb Trail */}
       <Breadcrumb
         currentPath={currentPath}
@@ -996,79 +1142,107 @@ export default function App() {
       <main>
         {currentPath === '/' || currentPath === '' ? (
           <>
-            {/* 1. Hero Welcome Segment */}
-            <div id="home">
-              <Hero
-                content={translatedContent}
-                images={images}
-                onNavigate={handleNavigate}
-                lang={lang}
-              />
-            </div>
-
-            {/* 2. Short Profile & Vision Mission */}
-            <div id="about">
-              <About
-                content={translatedContent}
-                images={images}
-                lang={lang}
-              />
-            </div>
-
-            {/* 3. Operational Milestones */}
-            <Stats
-              stats={translatedStats}
-            />
-
-            {/* 4. Curriculum Majors (Nautika, Teknika, KPN) */}
-            <div id="programs">
-              <Programs
-                programs={translatedPrograms}
-                onNavigate={handleNavigate}
-                lang={lang}
-              />
-            </div>
-
-            {/* 5. Training Facilities */}
-            <div id="facilities">
-              <Facilities
-                facilities={facilities}
-                lang={lang}
-              />
-            </div>
-
-            {/* 6. Activities Gallery with Lightbox */}
-            <div id="gallery">
-              <Gallery
-                galleryItems={galleryItems}
-                lang={lang}
-              />
-            </div>
-
-            {/* 7. Public Announcement Feed */}
-            <div id="news">
-              <News
-                newsItems={newsItems}
-                lang={lang}
-              />
-            </div>
-
-            {/* 8. Admissions and Entry Form */}
-            <div id="pmb">
-              <PMB
-                onAddApplication={handleAddApplication}
-                lang={lang}
-                pmbConfig={pmbConfig}
-              />
-            </div>
-
-            {/* 9. Cadet Stories Slider */}
-            <Testimonials alumni={alumniItems} />
-
-            {/* 10. Inquiry Contacts & Location Maps */}
-            <div id="contact">
-              <Contact contact={translatedContent.contact} />
-            </div>
+            {sections
+              .filter(sec => sec.isEnabled)
+              .sort((a, b) => a.order - b.order)
+              .map(sec => {
+                switch (sec.id) {
+                  case 'hero':
+                    return (
+                      <div id="home" key="hero">
+                        <Hero
+                          content={translatedContent}
+                          images={images}
+                          onNavigate={handleNavigate}
+                          lang={lang}
+                        />
+                      </div>
+                    );
+                  case 'banners':
+                    return (
+                      <div key="banners">
+                        <PromoBanner banners={banners} onNavigate={handleNavigate} />
+                      </div>
+                    );
+                  case 'about':
+                    return (
+                      <div id="about" key="about">
+                        <About
+                          content={translatedContent}
+                          images={images}
+                          lang={lang}
+                        />
+                      </div>
+                    );
+                  case 'stats':
+                    return (
+                      <div key="stats">
+                        <Stats stats={translatedStats} />
+                      </div>
+                    );
+                  case 'programs':
+                    return (
+                      <div id="programs" key="programs">
+                        <Programs
+                          programs={translatedPrograms}
+                          onNavigate={handleNavigate}
+                          lang={lang}
+                        />
+                      </div>
+                    );
+                  case 'facilities':
+                    return (
+                      <div id="facilities" key="facilities">
+                        <Facilities
+                          facilities={facilities}
+                          lang={lang}
+                        />
+                      </div>
+                    );
+                  case 'gallery':
+                    return (
+                      <div id="gallery" key="gallery">
+                        <Gallery
+                          galleryItems={galleryItems}
+                          lang={lang}
+                        />
+                      </div>
+                    );
+                  case 'news':
+                    return (
+                      <div id="news" key="news">
+                        <News
+                          newsItems={newsItems}
+                          lang={lang}
+                        />
+                      </div>
+                    );
+                  case 'pmb':
+                    return (
+                      <div id="pmb" key="pmb">
+                        <PMB
+                          onAddApplication={handleAddApplication}
+                          lang={lang}
+                          pmbConfig={pmbConfig}
+                        />
+                      </div>
+                    );
+                  case 'testimonials':
+                    return (
+                      <div key="testimonials">
+                        <Testimonials alumni={alumniItems} />
+                      </div>
+                    );
+                  case 'contact':
+                    return (
+                      <div id="contact" key="contact">
+                        <Contact contact={translatedContent.contact} />
+                      </div>
+                    );
+                  default:
+                    return null;
+                }
+              })}
           </>
         ) : currentPath.startsWith('/profil') ? (
           <ProfilePage
@@ -1141,6 +1315,19 @@ export default function App() {
           <div className="pt-8 bg-white">
             <Contact contact={translatedContent.contact} />
           </div>
+        ) : currentPath === '/store' ? (
+          <StorePage
+            products={storeProducts}
+            orders={storeOrders}
+            onAddOrder={(order) => setStoreOrders([order, ...storeOrders])}
+            lang={lang}
+          />
+        ) : currentPath === '/pengumuman' ? (
+          <AnnouncementsPage
+            announcements={announcements}
+            lang={lang}
+            onNavigate={handleNavigate}
+          />
         ) : (
           <div className="pt-24 pb-12 text-center bg-white min-h-screen flex flex-col items-center justify-center">
             <h1 className="text-4xl font-display font-black text-navy-950 mb-2">404</h1>
@@ -1207,7 +1394,25 @@ export default function App() {
         onUpdatePrograms={setPrograms}
         pmbConfig={pmbConfig}
         onUpdatePMBConfig={setPmbConfig}
+        banners={banners}
+        onUpdateBanners={setBanners}
+        popupPromo={popupPromo}
+        onUpdatePopupPromo={setPopupPromo}
+        runningTexts={runningTexts}
+        onUpdateRunningTexts={setRunningTexts}
+        announcements={announcements}
+        onUpdateAnnouncements={setAnnouncements}
+        storeProducts={storeProducts}
+        onUpdateStoreProducts={setStoreProducts}
+        storeOrders={storeOrders}
+        onUpdateStoreOrders={setStoreOrders}
+        sections={sections}
+        onUpdateSections={setSections}
       />
+
+      {/* Global Promotional Overlays & Contact Portals */}
+      <PromoPopup config={popupPromo} />
+      <FloatingButtons />
 
     </div>
   );
