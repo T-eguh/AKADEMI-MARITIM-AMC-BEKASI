@@ -16,9 +16,21 @@ interface HeroProps {
 
 export default function Hero({ content, images, onNavigate, lang = 'id' }: HeroProps) {
   const isEn = lang === 'en';
-  // Use first hero-specific background image or elegant fallback
-  const heroBgs = images.filter((img) => img.section === 'hero' && img.url).map((img) => img.url);
-  const bgImageUrl = heroBgs.length > 0 ? heroBgs[0] : 'https://images.unsplash.com/photo-1505705694340-019e1e335916?auto=format&fit=crop&q=85&w=1920';
+  
+  // Collect all available hero backgrounds
+  const heroBgs = images
+    .filter((img) => img.section === 'hero' && img.url)
+    .map((img) => img.url);
+
+  // Fallback list of premium Unsplash images if no customized hero images are found
+  const fallbackBgs = [
+    'https://images.unsplash.com/photo-1505705694340-019e1e335916?auto=format&fit=crop&q=85&w=1920',
+    'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=85&w=1920',
+    'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&q=85&w=1920'
+  ];
+
+  const activeBgs = heroBgs.length > 0 ? heroBgs : fallbackBgs;
+  const heroBg = activeBgs[0] || fallbackBgs[0];
 
   const highlightWords = ['Professional', 'Global', 'Maritime', 'Maritim', 'Profesional', 'Officers'];
 
@@ -27,14 +39,14 @@ export default function Hero({ content, images, onNavigate, lang = 'id' }: HeroP
       id="home"
       className="relative w-full h-screen overflow-hidden bg-black text-white flex items-center"
     >
-      {/* Single Stable Background Image */}
-      <div className="absolute inset-0 scale-105">
+      {/* High-Performance Static Background with Elegant Contrast */}
+      <div className="absolute inset-0 overflow-hidden">
         <img
-          src={bgImageUrl}
+          src={heroBg}
           alt="Maritim AMC Background"
           loading="eager"
           referrerPolicy="no-referrer"
-          className="w-full h-full object-cover opacity-90 transition-transform duration-1000"
+          className="w-full h-full object-cover transform scale-100"
         />
       </div>
 

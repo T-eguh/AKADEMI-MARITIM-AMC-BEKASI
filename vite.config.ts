@@ -23,10 +23,6 @@ export default defineConfig(() => {
                   const data = JSON.parse(body);
                   const filePath = path.resolve(process.cwd(), 'public/amc_backup.json');
                   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
-                  
-                  // Also write to src/custom_defaults.json for production bundling
-                  const customDefaultsPath = path.resolve(process.cwd(), 'src/custom_defaults.json');
-                  fs.writeFileSync(customDefaultsPath, JSON.stringify(data, null, 2), 'utf-8');
 
                   res.statusCode = 200;
                   res.setHeader('Content-Type', 'application/json');

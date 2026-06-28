@@ -9,21 +9,25 @@ interface PromoPopupProps {
 export default function PromoPopup({ config, onNavigate }: PromoPopupProps) {
   const [isOpen, setIsOpen] = useState(false);
 
+  const isActive = config ? (config.isActive ?? config.isEnabled ?? false) : false;
+  const displayImg = config ? (config.imageUrl || config.image) : '';
+  const actionLink = config ? (config.actionLink || config.link || '#pmb') : '#pmb';
+
   useEffect(() => {
-    if (!config || !config.isActive) return;
+    if (!config || !isActive) return;
 
     // Check if dismissed in this session
     const isDismissed = sessionStorage.getItem('amc_popup_dismissed') === 'true';
     if (!isDismissed) {
-      // Small delay of 1.5s after page loads for a professional feel
+      const delay = (config.displayDelay && config.displayDelay > 0) ? config.displayDelay * 1000 : 1500;
       const timer = setTimeout(() => {
         setIsOpen(true);
-      }, 1500);
+      }, delay);
       return () => clearTimeout(timer);
     }
-  }, [config]);
+  }, [config, isActive]);
 
-  if (!isOpen || !config || !config.isActive) return null;
+  if (!isOpen || !config || !isActive) return null;
 
   const handleClose = () => {
     setIsOpen(false);
@@ -34,7 +38,7 @@ export default function PromoPopup({ config, onNavigate }: PromoPopupProps) {
     sessionStorage.setItem('amc_popup_dismissed', 'true');
     setIsOpen(false);
     
-    const link = config.actionLink || '#pmb';
+    const link = actionLink;
     if (link.startsWith('#')) {
       const element = document.getElementById(link.substring(1));
       if (element) {
@@ -59,10 +63,10 @@ export default function PromoPopup({ config, onNavigate }: PromoPopupProps) {
       <div className="relative bg-white w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl border border-slate-100 z-10 animate-fade-in max-h-[90vh] flex flex-col">
         
         {/* Banner Image inside Popup */}
-        {config.imageUrl && (
+        {displayImg && (
           <div className="relative h-48 sm:h-56 overflow-hidden flex-shrink-0">
             <img 
-              src={config.imageUrl} 
+              src={displayImg} 
               alt={config.title}
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
@@ -85,7 +89,7 @@ export default function PromoPopup({ config, onNavigate }: PromoPopupProps) {
 
         {/* Text Content */}
         <div className="p-6 sm:p-8 flex-1 overflow-y-auto">
-          {!config.imageUrl && (
+          {!displayImg && (
             <div className="flex justify-between items-start mb-4">
               <h3 className="text-xl sm:text-2xl font-display font-black text-navy-900 pr-4">
                 {config.title || 'Informasi Penting'}
@@ -102,7 +106,7 @@ export default function PromoPopup({ config, onNavigate }: PromoPopupProps) {
             </div>
           )}
 
-          {config.imageUrl && (
+          {displayImg && (
             <h3 className="text-lg sm:text-xl font-display font-black text-navy-950 mb-2 leading-tight">
               {config.title}
             </h3>

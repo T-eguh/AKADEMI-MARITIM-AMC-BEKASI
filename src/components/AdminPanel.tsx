@@ -74,7 +74,7 @@ interface AdminPanelProps {
 }
 
 // Helper function to compress and resize images client-side before saving to state/localStorage with high fidelity
-const compressAndResizeImage = (file: File, maxWidth = 1000, maxHeight = 1000, quality = 0.65): Promise<string> => {
+const compressAndResizeImage = (file: File, maxWidth = 2048, maxHeight = 2048, quality = 0.95): Promise<string> => {
   return new Promise((resolve) => {
     if (!file || !file.type.startsWith('image/')) {
       resolve('');
@@ -253,6 +253,124 @@ export default function AdminPanel({
   const [migrationError, setMigrationError] = useState<string | null>(null);
   const [activeChart, setActiveChart] = useState<'visitors' | 'pmb' | 'news' | 'agenda' | 'gallery'>('visitors');
   const [savingToProject, setSavingToProject] = useState(false);
+  const [loadingFromServer, setLoadingFromServer] = useState(false);
+
+  const handleLoadFromServer = async () => {
+    setLoadingFromServer(true);
+    setMigrationSuccess(null);
+    setMigrationError(null);
+    try {
+      const res = await fetch(`/amc_backup.json?t=${Date.now()}`);
+      if (!res.ok) {
+        throw new Error(`Server returned HTTP ${res.status}`);
+      }
+      const parsed = await res.json();
+      if (parsed && typeof parsed === 'object') {
+        let keysLoaded = [];
+        if (parsed.images && Array.isArray(parsed.images)) {
+          onUpdateImages(parsed.images);
+          keysLoaded.push('Gambar/Foto');
+        }
+        if (parsed.content) {
+          onUpdateContent(parsed.content);
+          keysLoaded.push('Konten Teks');
+        }
+        if (parsed.newsItems && Array.isArray(parsed.newsItems)) {
+          onUpdateNews(parsed.newsItems);
+          keysLoaded.push('Berita');
+        }
+        if (parsed.facilities && Array.isArray(parsed.facilities)) {
+          onUpdateFacilities(parsed.facilities);
+          keysLoaded.push('Fasilitas');
+        }
+        if (parsed.galleryItems && Array.isArray(parsed.galleryItems)) {
+          onUpdateGallery(parsed.galleryItems);
+          keysLoaded.push('Galeri');
+        }
+        if (parsed.applications && Array.isArray(parsed.applications)) {
+          onUpdateApplications(parsed.applications);
+          keysLoaded.push('Pendaftaran');
+        }
+        if (parsed.alumniItems && Array.isArray(parsed.alumniItems)) {
+          onUpdateAlumni(parsed.alumniItems);
+          keysLoaded.push('Alumni');
+        }
+        if (parsed.seoSettings) {
+          onUpdateSEO(parsed.seoSettings);
+          keysLoaded.push('SEO');
+        }
+        if (parsed.users && Array.isArray(parsed.users)) {
+          onUpdateUsers(parsed.users);
+          keysLoaded.push('Pengguna');
+        }
+        if (parsed.mediaItems && Array.isArray(parsed.mediaItems)) {
+          onUpdateMedia(parsed.mediaItems);
+          keysLoaded.push('Media');
+        }
+        if (parsed.timelineEvents && Array.isArray(parsed.timelineEvents)) {
+          onUpdateTimelineEvents(parsed.timelineEvents);
+          keysLoaded.push('Timeline');
+        }
+        if (parsed.lecturers && Array.isArray(parsed.lecturers)) {
+          onUpdateLecturers(parsed.lecturers);
+          keysLoaded.push('Dosen');
+        }
+        if (parsed.calendarEvents && Array.isArray(parsed.calendarEvents)) {
+          onUpdateCalendarEvents(parsed.calendarEvents);
+          keysLoaded.push('Kalender');
+        }
+        if (parsed.programs && Array.isArray(parsed.programs)) {
+          onUpdatePrograms(parsed.programs);
+          keysLoaded.push('Prodi');
+        }
+        if (parsed.pmbConfig) {
+          onUpdatePMBConfig(parsed.pmbConfig);
+          keysLoaded.push('Config PMB');
+        }
+        if (parsed.banners && Array.isArray(parsed.banners)) {
+          onUpdateBanners(parsed.banners);
+          keysLoaded.push('Banner');
+        }
+        if (parsed.popupPromo) {
+          onUpdatePopupPromo(parsed.popupPromo);
+          keysLoaded.push('Popup Promo');
+        }
+        if (parsed.runningTexts && Array.isArray(parsed.runningTexts)) {
+          onUpdateRunningTexts(parsed.runningTexts);
+          keysLoaded.push('Running Text');
+        }
+        if (parsed.announcements && Array.isArray(parsed.announcements)) {
+          onUpdateAnnouncements(parsed.announcements);
+          keysLoaded.push('Pengumuman');
+        }
+        if (parsed.storeProducts && Array.isArray(parsed.storeProducts)) {
+          onUpdateStoreProducts(parsed.storeProducts);
+          keysLoaded.push('Produk');
+        }
+        if (parsed.storeOrders && Array.isArray(parsed.storeOrders)) {
+          onUpdateStoreOrders(parsed.storeOrders);
+          keysLoaded.push('Pesanan');
+        }
+        if (parsed.sections && Array.isArray(parsed.sections)) {
+          onUpdateSections(parsed.sections);
+          keysLoaded.push('Struktur');
+        }
+
+        const serverTs = parsed.updatedAt ? String(parsed.updatedAt) : String(Date.now());
+        localStorage.setItem('amc_local_edits_timestamp', serverTs);
+        localStorage.setItem('amc_backup_loaded', 'true');
+        localStorage.setItem('amc_has_local_edits', 'false');
+
+        setMigrationSuccess(`Sukses memuat ulang semua data dari server! Terdeteksi ${keysLoaded.join(', ')}.`);
+      } else {
+        throw new Error('Data backup server tidak valid.');
+      }
+    } catch (err) {
+      setMigrationError('Gagal memuat ulang dari server: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setLoadingFromServer(false);
+    }
+  };
 
   const handleSaveToProjectFiles = async () => {
     setSavingToProject(true);
@@ -1617,6 +1735,16 @@ export default function AdminPanel({
                         >
                           <Check className="h-3.5 w-3.5 animate-bounce" />
                           {savingToProject ? 'Menyimpan...' : 'Simpan Permanen ke Proyek'}
+                        </button>
+                        <button
+                          onClick={handleLoadFromServer}
+                          disabled={loadingFromServer}
+                          type="button"
+                          className="bg-amber-600 hover:bg-amber-700 disabled:bg-amber-300 text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all"
+                          title="Gunakan ini jika foto tampak blur di browser Anda, atau ingin membuang draf lokal dan memuat ulang file simpanan di server."
+                        >
+                          <RefreshCw className={`h-3.5 w-3.5 ${loadingFromServer ? 'animate-spin' : ''}`} />
+                          {loadingFromServer ? 'Memuat...' : 'Muat Ulang dari Server'}
                         </button>
                         <button
                           onClick={handleExportConfig}

@@ -2063,9 +2063,14 @@ const processAlumniImage = (
               <button
                 type="button"
                 onClick={() => {
-                  const updated = { ...popupPromo, isEnabled: !popupPromo.isEnabled };
+                  const nextVal = !popupPromo.isEnabled;
+                  const updated = { 
+                    ...popupPromo, 
+                    isEnabled: nextVal, 
+                    isActive: nextVal 
+                  };
                   onUpdatePopupPromo(updated);
-                  addLog('Toggle Popup Promosi', `Mengubah status popup menjadi: ${updated.isEnabled ? 'Aktif' : 'Nonaktif'}`);
+                  addLog('Toggle Popup Promosi', `Mengubah status popup menjadi: ${nextVal ? 'Aktif' : 'Nonaktif'}`);
                 }}
                 className={`px-4 py-2 rounded-xl text-[10px] uppercase tracking-wider font-extrabold transition cursor-pointer ${
                   popupPromo.isEnabled 
@@ -2083,42 +2088,66 @@ const processAlumniImage = (
                   <label className="text-slate-700 font-bold block">Judul Poster Popup</label>
                   <input
                     type="text"
-                    value={popupPromo.title}
+                    value={popupPromo.title || ''}
                     onChange={e => onUpdatePopupPromo({ ...popupPromo, title: e.target.value })}
                     placeholder="Contoh: Info PMB 2026/2027"
-                    className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs"
+                    className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-sans"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-slate-700 font-bold block">Link Tujuan Klik</label>
+                  <label className="text-slate-700 font-bold block">Deskripsi Poster Popup</label>
+                  <textarea
+                    rows={3}
+                    value={popupPromo.description || ''}
+                    onChange={e => onUpdatePopupPromo({ ...popupPromo, description: e.target.value })}
+                    placeholder="Masukkan deskripsi poster promosi..."
+                    className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-sans resize-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-slate-700 font-bold block">Teks Tombol Aksi</label>
                   <input
                     type="text"
-                    value={popupPromo.link}
-                    onChange={e => onUpdatePopupPromo({ ...popupPromo, link: e.target.value })}
-                    placeholder="Contoh: https://wa.me/628123456789 atau #pendaftaran"
-                    className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono"
+                    value={popupPromo.actionText || ''}
+                    onChange={e => onUpdatePopupPromo({ ...popupPromo, actionText: e.target.value })}
+                    placeholder="Contoh: Daftar Sekarang, Info Selengkapnya"
+                    className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-sans"
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-slate-700 font-bold block">Waktu Delay Muncul (Detik)</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={popupPromo.displayDelay || 1}
-                    onChange={e => onUpdatePopupPromo({ ...popupPromo, displayDelay: parseInt(e.target.value) || 1 })}
-                    className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono"
-                  />
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-slate-700 font-bold block">Link Tujuan Klik</label>
+                    <input
+                      type="text"
+                      value={popupPromo.actionLink || popupPromo.link || ''}
+                      onChange={e => onUpdatePopupPromo({ ...popupPromo, link: e.target.value, actionLink: e.target.value })}
+                      placeholder="Contoh: #pmb atau URL"
+                      className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-slate-700 font-bold block">Delay Muncul (Detik)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={popupPromo.displayDelay || 1}
+                      onChange={e => onUpdatePopupPromo({ ...popupPromo, displayDelay: parseInt(e.target.value) || 1 })}
+                      className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono"
+                    />
+                  </div>
                 </div>
               </div>
 
               <div className="space-y-3 bg-slate-50 p-4 rounded-xl border flex flex-col justify-between">
                 <div>
                   <span className="text-slate-700 font-bold block mb-1">Gambar Poster</span>
-                  {popupPromo.image && (
+                  {(popupPromo.image || popupPromo.imageUrl) && (
                     <div className="w-full h-36 rounded-lg overflow-hidden border bg-slate-100 mb-2">
-                      <img src={popupPromo.image} alt="Poster" className="w-full h-full object-contain bg-navy-950" />
+                      <img src={popupPromo.image || popupPromo.imageUrl} alt="Poster" className="w-full h-full object-contain bg-navy-950" />
                     </div>
                   )}
                 </div>
@@ -2130,7 +2159,7 @@ const processAlumniImage = (
                       const file = e.target.files?.[0];
                       if (file) {
                         const compressed = await compressImage(file);
-                        onUpdatePopupPromo({ ...popupPromo, image: compressed });
+                        onUpdatePopupPromo({ ...popupPromo, image: compressed, imageUrl: compressed });
                         addLog('Upload Gambar Popup', 'Berhasil memperbarui poster popup promosi.');
                       }
                     }}
@@ -2138,8 +2167,8 @@ const processAlumniImage = (
                   />
                   <input
                     type="text"
-                    value={popupPromo.image}
-                    onChange={e => onUpdatePopupPromo({ ...popupPromo, image: e.target.value })}
+                    value={popupPromo.image || popupPromo.imageUrl || ''}
+                    onChange={e => onUpdatePopupPromo({ ...popupPromo, image: e.target.value, imageUrl: e.target.value })}
                     placeholder="Atau URL Gambar langsung..."
                     className="w-full bg-white border border-slate-200 p-2 rounded-lg text-xs font-mono"
                   />

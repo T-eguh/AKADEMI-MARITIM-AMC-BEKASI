@@ -483,7 +483,8 @@ export default function App() {
             // 2. OR the deployed backup file has a newer timestamp than local edits
             // 3. OR the backup has never been loaded once before
             const isBackupLoaded = localStorage.getItem('amc_backup_loaded') === 'true';
-            const shouldLoadBackup = !isBackupLoaded || !hasLocalEdits || (serverTimestamp > localTimestamp);
+            const isAdmin = localStorage.getItem('amc_admin_logged') === 'true';
+            const shouldLoadBackup = !isAdmin || !isBackupLoaded || !hasLocalEdits || (serverTimestamp > localTimestamp);
 
             if (shouldLoadBackup) {
               console.log('AMC Bekasi: Loading configuration from amc_backup.json...');
