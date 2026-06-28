@@ -9,7 +9,7 @@ import {
   AnnouncementItem, StoreProduct, StoreOrder 
 } from './types';
 
-export const DEFAULT_IMAGES: WebsiteImage[] = [
+const _DEFAULT_IMAGES: WebsiteImage[] = [
   {
     id: 'campus_logo',
     section: 'logo',
@@ -114,14 +114,14 @@ export const DEFAULT_IMAGES: WebsiteImage[] = [
   },
 ];
 
-export const DEFAULT_STATS: StatItem[] = [
+const _DEFAULT_STATS: StatItem[] = [
   { id: 'stat_mhs', label: 'Taruna Aktif', value: 1250, suffix: '+', icon: 'Users' },
   { id: 'stat_dsn', label: 'Dosen & Instruktur', value: 85, suffix: '+', icon: 'GraduationCap' },
   { id: 'stat_prodi', label: 'Program Studi Unggulan', value: 3, suffix: '', icon: 'Anchor' },
   { id: 'stat_alumni', label: 'Alumni Terserap Kerja', value: 95, suffix: '%', icon: 'Briefcase' }
 ];
 
-export const DEFAULT_PROGRAMS: ProgramItem[] = [
+const _DEFAULT_PROGRAMS: ProgramItem[] = [
   {
     id: 'nautika',
     title: 'D3 Nautika',
@@ -172,7 +172,7 @@ export const DEFAULT_PROGRAMS: ProgramItem[] = [
   }
 ];
 
-export const DEFAULT_FACILITIES: FacilityItem[] = [
+const _DEFAULT_FACILITIES: FacilityItem[] = [
   {
     id: 'fac_simulator',
     title: 'Simulator Navigasi (Bridge Simulator)',
@@ -205,7 +205,7 @@ export const DEFAULT_FACILITIES: FacilityItem[] = [
   }
 ];
 
-export const DEFAULT_GALLERY: GalleryItem[] = [
+const _DEFAULT_GALLERY: GalleryItem[] = [
   {
     id: 'gal_1',
     title: 'Upacara Penerimaan Taruna Baru',
@@ -250,7 +250,7 @@ export const DEFAULT_GALLERY: GalleryItem[] = [
   }
 ];
 
-export const DEFAULT_NEWS: NewsItem[] = [
+const _DEFAULT_NEWS: NewsItem[] = [
   {
     id: 'news_1',
     title: 'AMC Bekasi Jalin Kerjasama Penyaluran Lulusan dengan Perusahaan Pelayaran Internasional asal Jepang',
@@ -283,7 +283,7 @@ export const DEFAULT_NEWS: NewsItem[] = [
   }
 ];
 
-export const DEFAULT_TESTIMONIALS: TestimonialItem[] = [
+const _DEFAULT_TESTIMONIALS: TestimonialItem[] = [
   {
     id: 'testi_1',
     name: 'Muhammad Hadori',
@@ -316,7 +316,7 @@ export const DEFAULT_TESTIMONIALS: TestimonialItem[] = [
   }
 ];
 
-export const DEFAULT_CONTENT: SiteContent = {
+const _DEFAULT_CONTENT: SiteContent = {
   hero: {
     title: 'Mencetak Taruna Maritim Profesional dan Berdaya Saing Global',
     subtitle: 'Akademi Maritim (AMC BEKASI) menyelenggarakan pendidikan tinggi pelayaran niaga terakreditasi yang melahirkan perwira dek, perwira mesin, serta ahli manajemen pelabuhan berstandar IMO.',
@@ -370,7 +370,7 @@ export const DEFAULT_CONTENT: SiteContent = {
 
 import { AlumniItem, SEOSettings, UserItem, MediaItem, ActivityLogItem, PageSectionConfig } from './types';
 
-export const DEFAULT_ALUMNI: AlumniItem[] = [
+const _DEFAULT_ALUMNI: AlumniItem[] = [
   {
     id: 'alum_1',
     photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=300',
@@ -424,7 +424,7 @@ export const DEFAULT_ALUMNI: AlumniItem[] = [
   }
 ];
 
-export const DEFAULT_SEO: SEOSettings = {
+const _DEFAULT_SEO: SEOSettings = {
   metaTitle: 'Akademi Maritim (AMC BEKASI) - Kampus Pelayaran Niaga Unggulan',
   metaDescription: 'Website Resmi Akademi Maritim (AMC BEKASI). Sekolah tinggi pelayaran niaga terakreditasi menghasilkan Perwira Deck (ANT-III), Perwira Mesin (ATT-III), dan Ahli Pelabuhan.',
   keywords: 'akademi maritim bekasi, amc bekasi, sekolah pelayaran bekasi, pendaftaran pelaut, d3 nautika, d3 teknika, d3 kpn, pmb amc bekasi, sekolah nakhoda',
@@ -434,7 +434,7 @@ export const DEFAULT_SEO: SEOSettings = {
   sitemap: '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>https://amc-bekasi.ac.id/</loc>\n    <lastmod>2026-06-26</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>1.0</priority>\n  </url>\n</urlset>'
 };
 
-export const DEFAULT_USERS: UserItem[] = [
+const _DEFAULT_USERS: UserItem[] = [
   {
     id: 'user_1',
     username: 'admin',
@@ -465,7 +465,7 @@ export const DEFAULT_USERS: UserItem[] = [
   }
 ];
 
-export const DEFAULT_MEDIA: MediaItem[] = [
+const _DEFAULT_MEDIA: MediaItem[] = [
   {
     id: 'media_1',
     name: 'logo_amc_bekasi.png',
@@ -504,7 +504,7 @@ export const DEFAULT_MEDIA: MediaItem[] = [
   }
 ];
 
-export const DEFAULT_LOGS: ActivityLogItem[] = [
+const _DEFAULT_LOGS: ActivityLogItem[] = [
   {
     id: 'log_1',
     user: 'admin',
@@ -531,7 +531,7 @@ export const DEFAULT_LOGS: ActivityLogItem[] = [
   }
 ];
 
-export const DEFAULT_TIMELINE: TimelineEvent[] = [
+const _DEFAULT_TIMELINE: TimelineEvent[] = [
   {
     id: 'time_1',
     year: 'Tahun 1986-1990',
@@ -558,7 +558,7 @@ export const DEFAULT_TIMELINE: TimelineEvent[] = [
   },
 ];
 
-export const DEFAULT_LECTURERS: LecturerItem[] = [
+const _DEFAULT_LECTURERS: LecturerItem[] = [
   {
     id: 'lec_1',
     name: 'Capt. Hartono, M.Mar',
@@ -627,7 +627,7 @@ export const DEFAULT_LECTURERS: LecturerItem[] = [
   }
 ];
 
-export const DEFAULT_CALENDAR: CalendarEventItem[] = [
+const _DEFAULT_CALENDAR: CalendarEventItem[] = [
   {
     id: 'cal_1',
     period: 'Agustus 2026',
@@ -666,7 +666,7 @@ export const DEFAULT_CALENDAR: CalendarEventItem[] = [
   }
 ];
 
-export const DEFAULT_PMB_CONFIG = {
+const _DEFAULT_PMB_CONFIG = {
   waves: [
     { id: 'wave1', name: 'Gelombang I (Jalur Dini)', period: '1 Januari - 30 April 2026', examDate: '5 Mei 2026', status: 'closed' as const },
     { id: 'wave2', name: 'Gelombang II (Jalur Reguler & Beasiswa)', period: '1 Juni - 15 Agustus 2026', examDate: '18 - 20 Agustus 2026', status: 'open' as const },
@@ -721,7 +721,7 @@ export const DEFAULT_PMB_CONFIG = {
   ]
 };
 
-export const DEFAULT_BANNERS: BannerPromoItem[] = [
+const _DEFAULT_BANNERS: BannerPromoItem[] = [
   {
     id: 'banner_1',
     title: 'Penerimaan Taruna Baru (PMB) Gelombang II',
@@ -757,7 +757,7 @@ export const DEFAULT_BANNERS: BannerPromoItem[] = [
   }
 ];
 
-export const DEFAULT_POPUP: PopupPromoConfig = {
+const _DEFAULT_POPUP: PopupPromoConfig = {
   id: 'popup_pmb_2026',
   title: 'Penerimaan Taruna Baru Gelombang II',
   description: 'Dapatkan kesempatan Beasiswa Uang Pangkal hingga 50% dan jaminan penempatan praktek laut di maskapai pelayaran mitra AMC Bekasi. Pendaftaran online sangat mudah dan cepat!',
@@ -767,13 +767,13 @@ export const DEFAULT_POPUP: PopupPromoConfig = {
   isActive: true
 };
 
-export const DEFAULT_RUNNING_TEXTS: RunningTextConfig[] = [
+const _DEFAULT_RUNNING_TEXTS: RunningTextConfig[] = [
   { id: 'rt_1', text: '📢 Pendaftaran Gelombang II Penerimaan Taruna Baru AMC Bekasi Tahun Akademik 2026/2027 Telah Dibuka hingga 15 Agustus 2026!', isActive: true },
   { id: 'rt_2', text: '📢 Beasiswa Khusus Anak Pelaut dan Beasiswa Prestasi Akademik masih dibuka, kuota terbatas!', isActive: true },
   { id: 'rt_3', text: '📢 Selamat dan Sukses atas Pelantikan Taruna Tingkat III untuk Praktek Laut (PRALA) di kapal-kapal niaga nasional dan asing.', isActive: true }
 ];
 
-export const DEFAULT_ANNOUNCEMENTS: AnnouncementItem[] = [
+const _DEFAULT_ANNOUNCEMENTS: AnnouncementItem[] = [
   {
     id: 'ann_1',
     title: 'Pengumuman Hasil Seleksi Berkas Calon Taruna (Catar) Gelombang I',
@@ -800,7 +800,7 @@ export const DEFAULT_ANNOUNCEMENTS: AnnouncementItem[] = [
   }
 ];
 
-export const DEFAULT_PRODUCTS: StoreProduct[] = [
+const _DEFAULT_PRODUCTS: StoreProduct[] = [
   {
     id: 'prod_1',
     name: 'Jas Almamater Resmi AMC Bekasi',
@@ -876,7 +876,7 @@ export const DEFAULT_PRODUCTS: StoreProduct[] = [
   }
 ];
 
-export const DEFAULT_SECTIONS: PageSectionConfig[] = [
+const _DEFAULT_SECTIONS: PageSectionConfig[] = [
   { id: 'hero', name: 'Banner Hero Selamat Datang', label: 'Hero Banner', isEnabled: true, order: 1 },
   { id: 'banners', name: 'Banner Promosi / Iklan Kampus', label: 'Promo Banner', isEnabled: true, order: 2 },
   { id: 'about', name: 'Sejarah Singkat & Visi Misi', label: 'Profil Singkat', isEnabled: true, order: 3 },
@@ -893,3 +893,32 @@ export const DEFAULT_SECTIONS: PageSectionConfig[] = [
 
 
 
+
+import customDefaults from './custom_defaults.json';
+
+const hasCustom = customDefaults && (customDefaults as any).updatedAt > 0;
+const d = customDefaults as any;
+
+export const DEFAULT_IMAGES: WebsiteImage[] = (hasCustom && Array.isArray(d.images)) ? d.images : _DEFAULT_IMAGES;
+export const DEFAULT_STATS: StatItem[] = _DEFAULT_STATS;
+export const DEFAULT_PROGRAMS: ProgramItem[] = (hasCustom && Array.isArray(d.programs)) ? d.programs : _DEFAULT_PROGRAMS;
+export const DEFAULT_FACILITIES: FacilityItem[] = (hasCustom && Array.isArray(d.facilities)) ? d.facilities : _DEFAULT_FACILITIES;
+export const DEFAULT_GALLERY: GalleryItem[] = (hasCustom && Array.isArray(d.galleryItems)) ? d.galleryItems : _DEFAULT_GALLERY;
+export const DEFAULT_NEWS: NewsItem[] = (hasCustom && Array.isArray(d.newsItems)) ? d.newsItems : _DEFAULT_NEWS;
+export const DEFAULT_TESTIMONIALS: TestimonialItem[] = _DEFAULT_TESTIMONIALS;
+export const DEFAULT_CONTENT: SiteContent = (hasCustom && typeof d.content === 'object' && d.content) ? d.content : _DEFAULT_CONTENT;
+export const DEFAULT_ALUMNI: AlumniItem[] = (hasCustom && Array.isArray(d.alumniItems)) ? d.alumniItems : _DEFAULT_ALUMNI;
+export const DEFAULT_SEO: SEOSettings = (hasCustom && typeof d.seoSettings === 'object' && d.seoSettings) ? d.seoSettings : _DEFAULT_SEO;
+export const DEFAULT_USERS: UserItem[] = (hasCustom && Array.isArray(d.users)) ? d.users : _DEFAULT_USERS;
+export const DEFAULT_MEDIA: MediaItem[] = (hasCustom && Array.isArray(d.mediaItems)) ? d.mediaItems : _DEFAULT_MEDIA;
+export const DEFAULT_LOGS: ActivityLogItem[] = _DEFAULT_LOGS;
+export const DEFAULT_TIMELINE: TimelineEvent[] = (hasCustom && Array.isArray(d.timelineEvents)) ? d.timelineEvents : _DEFAULT_TIMELINE;
+export const DEFAULT_LECTURERS: LecturerItem[] = (hasCustom && Array.isArray(d.lecturers)) ? d.lecturers : _DEFAULT_LECTURERS;
+export const DEFAULT_CALENDAR: CalendarEventItem[] = (hasCustom && Array.isArray(d.calendarEvents)) ? d.calendarEvents : _DEFAULT_CALENDAR;
+export const DEFAULT_PMB_CONFIG = (hasCustom && typeof d.pmbConfig === 'object' && d.pmbConfig) ? d.pmbConfig : _DEFAULT_PMB_CONFIG;
+export const DEFAULT_BANNERS: BannerPromoItem[] = (hasCustom && Array.isArray(d.banners)) ? d.banners : _DEFAULT_BANNERS;
+export const DEFAULT_POPUP: PopupPromoConfig = (hasCustom && typeof d.popupPromo === 'object' && d.popupPromo) ? d.popupPromo : _DEFAULT_POPUP;
+export const DEFAULT_RUNNING_TEXTS: RunningTextConfig[] = (hasCustom && Array.isArray(d.runningTexts)) ? d.runningTexts : _DEFAULT_RUNNING_TEXTS;
+export const DEFAULT_ANNOUNCEMENTS: AnnouncementItem[] = (hasCustom && Array.isArray(d.announcements)) ? d.announcements : _DEFAULT_ANNOUNCEMENTS;
+export const DEFAULT_PRODUCTS: StoreProduct[] = (hasCustom && Array.isArray(d.storeProducts)) ? d.storeProducts : _DEFAULT_PRODUCTS;
+export const DEFAULT_SECTIONS: PageSectionConfig[] = (hasCustom && Array.isArray(d.sections)) ? d.sections : _DEFAULT_SECTIONS;
