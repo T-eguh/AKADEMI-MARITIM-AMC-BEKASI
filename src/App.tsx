@@ -470,7 +470,7 @@ export default function App() {
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        const res = await fetch('/amc_backup.json');
+        const res = await fetch(`/amc_backup.json?t=${Date.now()}`);
         if (res.ok) {
           const parsed = await res.json();
           if (parsed && typeof parsed === 'object') {
