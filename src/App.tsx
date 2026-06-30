@@ -130,8 +130,76 @@ export default function App() {
   // ----------------------------------------------------
   useEffect(() => {
     const loadConfig = async () => {
+      // 1. First, load from localStorage immediately to prevent layout flashes or loss of offline edits
       try {
-        // Fetch the dynamic server-side updated configuration directly
+        const storedImages = localStorage.getItem('amc_images');
+        if (storedImages) setImages(JSON.parse(storedImages));
+        
+        const storedContent = localStorage.getItem('amc_content');
+        if (storedContent) setContent(JSON.parse(storedContent));
+        
+        const storedNews = localStorage.getItem('amc_news');
+        if (storedNews) setNewsItems(JSON.parse(storedNews));
+        
+        const storedFacilities = localStorage.getItem('amc_facilities');
+        if (storedFacilities) setFacilities(JSON.parse(storedFacilities));
+        
+        const storedGallery = localStorage.getItem('amc_gallery');
+        if (storedGallery) setGalleryItems(JSON.parse(storedGallery));
+        
+        const storedApplications = localStorage.getItem('amc_applications');
+        if (storedApplications) setApplications(JSON.parse(storedApplications));
+        
+        const storedAlumni = localStorage.getItem('amc_alumni');
+        if (storedAlumni) setAlumniItems(JSON.parse(storedAlumni));
+        
+        const storedSeo = localStorage.getItem('amc_seo');
+        if (storedSeo) setSeoSettings(JSON.parse(storedSeo));
+        
+        const storedUsers = localStorage.getItem('amc_users');
+        if (storedUsers) setUsers(JSON.parse(storedUsers));
+        
+        const storedTimeline = localStorage.getItem('amc_timeline');
+        if (storedTimeline) setTimelineEvents(JSON.parse(storedTimeline));
+        
+        const storedLecturers = localStorage.getItem('amc_lecturers');
+        if (storedLecturers) setLecturers(JSON.parse(storedLecturers));
+        
+        const storedCalendar = localStorage.getItem('amc_calendar');
+        if (storedCalendar) setCalendarEvents(JSON.parse(storedCalendar));
+        
+        const storedPrograms = localStorage.getItem('amc_programs');
+        if (storedPrograms) setPrograms(JSON.parse(storedPrograms));
+        
+        const storedPmbConfig = localStorage.getItem('amc_pmb_config');
+        if (storedPmbConfig) setPmbConfig(JSON.parse(storedPmbConfig));
+        
+        const storedBanners = localStorage.getItem('amc_banners');
+        if (storedBanners) setBanners(JSON.parse(storedBanners));
+        
+        const storedPopup = localStorage.getItem('amc_popup_promo');
+        if (storedPopup) setPopupPromo(JSON.parse(storedPopup));
+        
+        const storedRunning = localStorage.getItem('amc_running_texts');
+        if (storedRunning) setRunningTexts(JSON.parse(storedRunning));
+        
+        const storedAnnouncements = localStorage.getItem('amc_announcements');
+        if (storedAnnouncements) setAnnouncements(JSON.parse(storedAnnouncements));
+        
+        const storedProducts = localStorage.getItem('amc_store_products');
+        if (storedProducts) setStoreProducts(JSON.parse(storedProducts));
+        
+        const storedOrders = localStorage.getItem('amc_store_orders');
+        if (storedOrders) setStoreOrders(JSON.parse(storedOrders));
+        
+        const storedSections = localStorage.getItem('amc_sections');
+        if (storedSections) setSections(JSON.parse(storedSections));
+      } catch (e) {
+        console.warn('AMC Bekasi: Failed to preload some states from localStorage', e);
+      }
+
+      // 2. Fetch the dynamic server-side updated configuration directly
+      try {
         let parsed: any = null;
         const res = await fetch(`/amc_backup.json?t=${Date.now()}`);
         if (res.ok) {
@@ -562,6 +630,77 @@ export default function App() {
     }
   }, [sections]);
 
+  // Debounced auto-save to server when state changes
+  useEffect(() => {
+    if (isConfigLoading) return; // Wait until initial load is complete
+    
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const payload = {
+          updatedAt: Date.now(),
+          images,
+          content,
+          newsItems,
+          facilities,
+          galleryItems,
+          applications,
+          alumniItems,
+          seoSettings,
+          users,
+          timelineEvents,
+          lecturers,
+          calendarEvents,
+          programs,
+          pmbConfig,
+          banners,
+          popupPromo,
+          runningTexts,
+          announcements,
+          storeProducts,
+          storeOrders,
+          sections
+        };
+        const response = await fetch('/api/save-backup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        if (response.ok) {
+          console.log('AMC Bekasi: Auto-saved state to server');
+        }
+      } catch (err) {
+        console.error('Auto-save to server failed:', err);
+      }
+    }, 1000); // 1.0 second debounce
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [
+    isConfigLoading,
+    images,
+    content,
+    newsItems,
+    facilities,
+    galleryItems,
+    applications,
+    alumniItems,
+    seoSettings,
+    users,
+    timelineEvents,
+    lecturers,
+    calendarEvents,
+    programs,
+    pmbConfig,
+    banners,
+    popupPromo,
+    runningTexts,
+    announcements,
+    storeProducts,
+    storeOrders,
+    sections
+  ]);
+
   // Manual server-side backup saving to ensure all edits are stored on the server upon explicit save action
   const handleSaveAllToServer = async () => {
     try {
@@ -886,6 +1025,72 @@ export default function App() {
     );
   }
 
+  const isAdminPath = currentPath === '/admin' || currentPath === '/admin/';
+
+  if (isAdminPath) {
+    return (
+      <div className="min-h-screen bg-slate-100 font-sans selection:bg-gold-500 selection:text-navy-950">
+        <AdminPanel
+          isOpen={true}
+          onClose={() => {
+            setIsAdminLoggedIn(false); // Secure: force logout on exiting admin panel
+            handleNavigate('/');
+          }}
+          images={images}
+          onUpdateImages={setImages}
+          content={content}
+          onUpdateContent={setContent}
+          newsItems={newsItems}
+          onUpdateNews={setNewsItems}
+          facilities={facilities}
+          onUpdateFacilities={setFacilities}
+          galleryItems={galleryItems}
+          onUpdateGallery={setGalleryItems}
+          applications={applications}
+          onUpdateApplications={setApplications}
+          alumniItems={alumniItems}
+          onUpdateAlumni={setAlumniItems}
+          seoSettings={seoSettings}
+          onUpdateSEO={setSeoSettings}
+          users={users}
+          onUpdateUsers={setUsers}
+          mediaItems={mediaItems}
+          onUpdateMedia={setMediaItems}
+          activityLogs={activityLogs}
+          onUpdateLogs={setActivityLogs}
+          isLoggedIn={isAdminLoggedIn}
+          onLoginStatusChange={setIsAdminLoggedIn}
+          onResetToDefaults={handleResetToDefaults}
+          onSaveAllToServer={handleSaveAllToServer}
+          timelineEvents={timelineEvents}
+          onUpdateTimelineEvents={setTimelineEvents}
+          lecturers={lecturers}
+          onUpdateLecturers={setLecturers}
+          calendarEvents={calendarEvents}
+          onUpdateCalendarEvents={setCalendarEvents}
+          programs={programs}
+          onUpdatePrograms={setPrograms}
+          pmbConfig={pmbConfig}
+          onUpdatePMBConfig={setPmbConfig}
+          banners={banners}
+          onUpdateBanners={setBanners}
+          popupPromo={popupPromo}
+          onUpdatePopupPromo={setPopupPromo}
+          runningTexts={runningTexts}
+          onUpdateRunningTexts={setRunningTexts}
+          announcements={announcements}
+          onUpdateAnnouncements={setAnnouncements}
+          storeProducts={storeProducts}
+          onUpdateStoreProducts={setStoreProducts}
+          storeOrders={storeOrders}
+          onUpdateStoreOrders={setStoreOrders}
+          sections={sections}
+          onUpdateSections={setSections}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white text-slate-900 overflow-x-hidden font-sans selection:bg-gold-500 selection:text-navy-950">
       
@@ -893,7 +1098,7 @@ export default function App() {
       <Header
         onNavigate={handleNavigate}
         activeSection={activeSection}
-        onOpenAdmin={() => setIsAdminOpen(true)}
+        onOpenAdmin={() => handleNavigate('/admin')}
         isAdminLoggedIn={isAdminLoggedIn}
         onLogoutAdmin={() => setIsAdminLoggedIn(false)}
         images={images}
@@ -1118,7 +1323,7 @@ export default function App() {
       {/* Corporate Institutional Footer */}
       <Footer
         onNavigate={handleNavigate}
-        onOpenAdmin={() => setIsAdminOpen(true)}
+        onOpenAdmin={() => handleNavigate('/admin')}
         isAdminLoggedIn={isAdminLoggedIn}
         images={images}
         socialMedia={translatedContent.socialMedia}

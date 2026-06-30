@@ -356,13 +356,16 @@ export default function ProfilePage({
                 {/* Main Content Paragraphs */}
                 <div className="space-y-4 leading-relaxed text-justify text-slate-600">
                   <p>
-                    Akademi Maritim (AMC Bekasi) merupakan institusi pendidikan tinggi yang berkomitmen menyelenggarakan pendidikan vokasi berkualitas di bidang kemaritiman. Kampus ini berfokus pada pengembangan sumber daya manusia yang profesional, berkarakter, disiplin, dan siap menghadapi tantangan dunia maritim nasional maupun internasional.
+                    Akademi Maritim AMC Bekasi merupakan institusi pendidikan tinggi kemaritiman yang telah berpengalaman dalam mencetak pelaut profesional, kompeten, dan berkarakter sejak berdiri tahun 1993.
                   </p>
                   <p>
-                    AMC Bekasi menerapkan sistem pendidikan yang mengintegrasikan pembelajaran teori, praktik, pembentukan karakter, kepemimpinan, serta pengembangan kompetensi sesuai kebutuhan dunia industri.
+                    AMC telah berkontribusi dalam menghasilkan lulusan yang bekerja di berbagai perusahaan pelayaran nasional maupun internasional. Dengan mengedepankan pendidikan berbasis kompetensi, kedisiplinan, serta pembinaan karakter, AMC terus berkomitmen menghadirkan proses pembelajaran yang selaras dengan perkembangan teknologi maritim dan kebutuhan industri pelayaran global.
                   </p>
                   <p>
-                    Mahasiswa tidak hanya dibekali kemampuan akademik, tetapi juga kemampuan komunikasi, kepemimpinan, etika profesi, kerja sama tim, serta kedisiplinan.
+                    Dalam rangka meningkatkan kualitas layanan pendidikan dan memperluas akses bagi masyarakat, AMC mengambil langkah strategis dengan bertransformasi dari Kota Cirebon menuju Kabupaten Bekasi pada bulan Januari 2023. Transformasi ini dilakukan untuk menghadirkan kampus yang lebih representatif, didukung lahan yang lebih luas, fasilitas pembelajaran yang semakin modern, serta lokasi yang lebih dekat dengan kawasan industri, pelabuhan, dan pusat kegiatan ekonomi nasional dan pusat administrasi di Jakarta.
+                  </p>
+                  <p>
+                    Kehadiran AMC Bekasi diharapkan menjadi pusat pengembangan pendidikan kemaritiman yang unggul, mencetak sumber daya manusia maritim yang profesional, berdaya saing global, serta siap mendukung terwujudnya Indonesia sebagai poros maritim dunia.
                   </p>
                 </div>
 

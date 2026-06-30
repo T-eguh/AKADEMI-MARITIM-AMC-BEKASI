@@ -489,7 +489,7 @@ export default function AdminPanel({
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
-      setMigrationSuccess('Ekspor sukses! Agar semua data/foto ini ikut ke Vercel, ubah nama file ini menjadi "amc_backup.json" lalu taruh di dalam folder "public" proyek Anda sebelum di-deploy/push!');
+      setMigrationSuccess('Ekspor sukses! ubah nama file ini menjadi "amc_backup.json" lalu taruh di dalam folder "public" proyek Anda sebelum di-deploy/push!');
       setTimeout(() => setMigrationSuccess(null), 15000);
     } catch (err) {
       setMigrationError('Gagal mengekspor data: ' + (err instanceof Error ? err.message : String(err)));
@@ -1076,6 +1076,8 @@ export default function AdminPanel({
       username.toLowerCase() === 'admin' && 
       (password === 'amc2026!' || password === 'adminamc')
     ) {
+      localStorage.setItem('amc_admin_token', 'amc_bypass_admin_token');
+      localStorage.setItem('amc_admin_refresh_token', 'amc_bypass_admin_token');
       onLoginStatusChange(true);
       setLoginError('');
       setUsername('');
@@ -1406,6 +1408,19 @@ export default function AdminPanel({
                       )}
                     </button>
 
+                    {/* Konfigurasi PMB */}
+                    <button
+                      onClick={() => setActiveTab('pmb_config')}
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
+                        activeTab === 'pmb_config'
+                          ? 'bg-navy-800 text-white shadow-md'
+                          : 'text-gray-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Wrench className="h-4 w-4 shrink-0 text-amber-500" />
+                      <span>Konfigurasi PMB</span>
+                    </button>
+
                     {/* 3. Kelola Berita */}
                     <button
                       onClick={() => setActiveTab('news')}
@@ -1518,6 +1533,45 @@ export default function AdminPanel({
                       <span>Agenda</span>
                     </button>
 
+                    {/* Sejarah & Milestone */}
+                    <button
+                      onClick={() => setActiveTab('timeline')}
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
+                        activeTab === 'timeline'
+                          ? 'bg-navy-800 text-white shadow-md'
+                          : 'text-gray-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Milestone className="h-4 w-4 shrink-0 text-slate-500" />
+                      <span>Sejarah & Milestone</span>
+                    </button>
+
+                    {/* Visi & Misi */}
+                    <button
+                      onClick={() => setActiveTab('visimisi')}
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
+                        activeTab === 'visimisi'
+                          ? 'bg-navy-800 text-white shadow-md'
+                          : 'text-gray-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Target className="h-4 w-4 shrink-0 text-slate-500" />
+                      <span>Visi & Misi</span>
+                    </button>
+
+                    {/* Direktori Dosen */}
+                    <button
+                      onClick={() => setActiveTab('dosen')}
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
+                        activeTab === 'dosen'
+                          ? 'bg-navy-800 text-white shadow-md'
+                          : 'text-gray-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <GraduationCap className="h-4 w-4 shrink-0 text-slate-500" />
+                      <span>Direktori Dosen</span>
+                    </button>
+
                   </div>
                 </div>
 
@@ -1613,6 +1667,32 @@ export default function AdminPanel({
                 <div className="space-y-1">
                   <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-1 px-3">PENGATURAN</span>
                   <div className="flex flex-col space-y-1">
+
+                    {/* Atur Gambar Landing */}
+                    <button
+                      onClick={() => setActiveTab('images')}
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
+                        activeTab === 'images'
+                          ? 'bg-navy-800 text-white shadow-md'
+                          : 'text-gray-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Image className="h-4 w-4 shrink-0 text-slate-500" />
+                      <span>Atur Gambar Landing</span>
+                    </button>
+
+                    {/* Atur Konten Teks */}
+                    <button
+                      onClick={() => setActiveTab('content')}
+                      className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold font-display tracking-wide text-left transition-colors cursor-pointer ${
+                        activeTab === 'content'
+                          ? 'bg-navy-800 text-white shadow-md'
+                          : 'text-gray-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <FileText className="h-4 w-4 shrink-0 text-slate-500" />
+                      <span>Atur Konten Teks</span>
+                    </button>
 
                     {/* 16. Kontak */}
                     <button
@@ -3759,7 +3839,7 @@ export default function AdminPanel({
                           <input
                             type="text"
                             required
-                            placeholder="Contoh: Pendirian Akademi Maritim Cendekia"
+                            placeholder="Contoh: Pendirian Akademi Maritim "
                             value={timelineFormData.title}
                             onChange={(e) => setTimelineFormData({ ...timelineFormData, title: e.target.value })}
                             className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-navy-800 focus:bg-white text-xs"
@@ -3869,7 +3949,7 @@ export default function AdminPanel({
                         value={visionInput}
                         onChange={(e) => setVisionInput(e.target.value)}
                         className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-navy-800 focus:bg-white text-xs leading-relaxed"
-                        placeholder="Tuliskan pernyataan visi Akademi Maritim Cendekia Bekasi..."
+                        placeholder="Tuliskan pernyataan visi Akademi Maritim  Bekasi..."
                       />
                     </div>
 

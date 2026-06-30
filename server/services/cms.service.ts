@@ -1,6 +1,6 @@
 import { BaseRepository } from '../repositories/base.repository';
 import fs from 'fs';
-import { JSON_DB_PATH, isMySQL, pool } from '../config/db';
+import { JSON_DB_PATH, getIsMySQL, pool } from '../config/db';
 
 export class CMSService {
   // --- Dynamic Collection Accessors ---
@@ -35,7 +35,7 @@ export class CMSService {
 
   // --- Backup & Restore Features ---
   static async exportBackup(): Promise<any> {
-    if (isMySQL && pool) {
+    if (getIsMySQL() && pool) {
       try {
         // Export fully consolidated JSON structure of all standard collections
         const tables = [
@@ -69,7 +69,7 @@ export class CMSService {
       throw new Error('Invalid backup format');
     }
 
-    if (isMySQL && pool) {
+    if (getIsMySQL() && pool) {
       try {
         const tables = [
           'users', 'news', 'gallery', 'facilities', 'store_products', 'store_orders'

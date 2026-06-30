@@ -498,7 +498,7 @@ const processAlumniImage = (
   // 2. SEO STATES & HANDLERS
   const defaultSEO: SEOSettings = {
     metaTitle: 'Akademi Maritim  (AMC) Bekasi',
-    metaDescription: 'Portal Resmi Akademi Maritim C (AMC) Bekasi. Menghasilkan Perwira Pelayaran Niaga dan Tenaga Logistik Maritim handal yang berstandar internasional.',
+    metaDescription: 'Portal Resmi Akademi Maritim (AMC) Bekasi. Menghasilkan Perwira Pelayaran Niaga dan Tenaga Logistik Maritim handal yang berstandar internasional.',
     keywords: 'amc bekasi, akademi maritim, pmb amc, nautika bekasi, teknika bekasi, kpn bekasi, sekolah pelayaran',
     openGraph: 'https://amc.ac.id/og-image.jpg',
     favicon: 'https://amc.ac.id/favicon.ico',
@@ -1313,7 +1313,7 @@ const processAlumniImage = (
       )}
 
       {/* ==================== 3. USERS & ROLES ==================== */}
-      {activeTab === 'users' && (
+      {activeTab === 'admin' && (
         <div className="space-y-6 animate-fade-in text-xs font-sans">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -2412,7 +2412,7 @@ const processAlumniImage = (
                     maxLength={200}
                     value={textForm.text}
                     onChange={e => setTextForm({ ...textForm, text: e.target.value })}
-                    placeholder="Contoh: Penerimaan Taruna Baru Akademi Maritim Cirebon Bekasi Resmi Dibuka!"
+                    placeholder="Contoh: Penerimaan Taruna Baru Akademi Maritim AMC Bekasi Resmi Dibuka!"
                     className="w-full bg-slate-50 border border-slate-200 p-3 rounded-lg text-xs leading-relaxed"
                   />
                 </div>
@@ -3479,7 +3479,7 @@ const processAlumniImage = (
                   <label className="text-slate-700 font-bold block">Nomor Telepon Kantor (Telephone)</label>
                   <input
                     type="text"
-                    value={content?.contact?.phone || '(021) 88391234'}
+                    value={content?.contact?.phone ?? ''}
                     onChange={e => onUpdateContent({ ...content!, contact: { ...content!.contact!, phone: e.target.value } })}
                     className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono font-bold"
                   />
@@ -3488,7 +3488,7 @@ const processAlumniImage = (
                   <label className="text-slate-700 font-bold block">WhatsApp Hot-Line (Pendaftaran Taruna)</label>
                   <input
                     type="text"
-                    value={content?.contact?.whatsapp || '081234567890'}
+                    value={content?.contact?.whatsapp ?? ''}
                     onChange={e => onUpdateContent({ ...content!, contact: { ...content!.contact!, whatsapp: e.target.value } })}
                     placeholder="Contoh: 081290901234"
                     className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono font-bold"
@@ -3500,7 +3500,7 @@ const processAlumniImage = (
                 <label className="text-slate-700 font-bold block">Alamat Email Resmi Kampus</label>
                 <input
                   type="email"
-                  value={content?.contact?.email || 'info@amcbekasi.ac.id'}
+                  value={content?.contact?.email ?? ''}
                   onChange={e => onUpdateContent({ ...content!, contact: { ...content!.contact!, email: e.target.value } })}
                   className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono"
                 />
@@ -3510,7 +3510,7 @@ const processAlumniImage = (
                 <label className="text-slate-700 font-bold block">Alamat Fisik / Sekretariat Kampus (Sesuai Footer)</label>
                 <textarea
                   rows={3}
-                  value={content?.contact?.address || 'Jl. Raya Teuku Umar No. 12, Bekasi, Jawa Barat, Indonesia'}
+                  value={content?.contact?.address ?? ''}
                   onChange={e => onUpdateContent({ ...content!, contact: { ...content!.contact!, address: e.target.value } })}
                   className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs leading-relaxed"
                 />
@@ -3589,7 +3589,7 @@ const processAlumniImage = (
                     <label className="text-slate-700 font-bold block">Nama Website</label>
                     <input
                       type="text"
-                      value={content?.siteName || "Akademi Maritim Cirebon Bekasi (AMC Bekasi)"}
+                      value={content?.siteName ?? ''}
                       onChange={e => onUpdateContent({ ...content!, siteName: e.target.value })}
                       className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-bold"
                     />
@@ -3598,7 +3598,7 @@ const processAlumniImage = (
                     <label className="text-slate-700 font-bold block">Meta Title Global</label>
                     <input
                       type="text"
-                      value={seoForm.metaTitle || ''}
+                      value={seoForm.metaTitle ?? ''}
                       onChange={e => setSeoForm({ ...seoForm, metaTitle: e.target.value })}
                       className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs"
                     />
@@ -3621,7 +3621,7 @@ const processAlumniImage = (
                     <input
                       type="text"
                       placeholder="G-XXXXXXXXXX"
-                      value={seoForm.analyticsId || 'G-Y2H7K0W8EX'}
+                      value={seoForm.analyticsId ?? ''}
                       onChange={e => setSeoForm({ ...seoForm, analyticsId: e.target.value })}
                       className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono"
                     />
@@ -3631,7 +3631,7 @@ const processAlumniImage = (
                     <input
                       type="text"
                       placeholder="google-site-verification=..."
-                      value={seoForm.searchConsoleKey || 'google-site-verification=abc123xyz_verification_amc'}
+                      value={seoForm.searchConsoleKey ?? ''}
                       onChange={e => setSeoForm({ ...seoForm, searchConsoleKey: e.target.value })}
                       className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono"
                     />
@@ -3643,7 +3643,7 @@ const processAlumniImage = (
                     <label className="text-slate-700 font-bold block">Open Graph Title</label>
                     <input
                       type="text"
-                      value={seoForm.ogTitle || 'AMC Bekasi - Pendidikan Pelayaran Profesional'}
+                      value={seoForm.ogTitle ?? ''}
                       onChange={e => setSeoForm({ ...seoForm, ogTitle: e.target.value })}
                       className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-medium"
                     />
@@ -3664,7 +3664,7 @@ const processAlumniImage = (
                     <label className="text-slate-700 font-bold block">XML Sitemap Path</label>
                     <input
                       type="text"
-                      value={seoForm.sitemap || '/sitemap.xml'}
+                      value={seoForm.sitemap ?? ''}
                       onChange={e => setSeoForm({ ...seoForm, sitemap: e.target.value })}
                       className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono"
                     />
@@ -3673,7 +3673,7 @@ const processAlumniImage = (
                     <label className="text-slate-700 font-bold block">Robots.txt Configuration</label>
                     <textarea
                       rows={3}
-                      value={seoForm.robots || `User-agent: *\nAllow: /\nSitemap: https://amcbekasi.ac.id/sitemap.xml`}
+                      value={seoForm.robots ?? ''}
                       onChange={e => setSeoForm({ ...seoForm, robots: e.target.value })}
                       className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono"
                     />
@@ -3684,7 +3684,7 @@ const processAlumniImage = (
                   <label className="text-slate-700 font-bold block">Copyright Footer Text</label>
                   <input
                     type="text"
-                    value={content?.copyright || "© 2026 Akademi Maritim Cirebon Bekasi. All Rights Reserved."}
+                    value={content?.copyright ?? ''}
                     onChange={e => onUpdateContent({ ...content!, copyright: e.target.value })}
                     className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-medium"
                   />

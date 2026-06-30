@@ -36,7 +36,7 @@ router.put(
 router.delete(
   '/cms/:collection/:id',
   authenticateJWT,
-  authorizeRoles(['Super Admin', 'Admin']),
+  authorizeRoles(['Super Admin', 'Admin', 'Editor', 'News Admin', 'PMB Admin', 'Operator PMB', 'Operator Store']),
   CMSController.deleteItem
 );
 

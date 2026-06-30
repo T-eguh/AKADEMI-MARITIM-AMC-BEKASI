@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { isMySQL, pool, JSON_DB_PATH } from '../config/db';
+import { getIsMySQL, pool, JSON_DB_PATH } from '../config/db';
 
 // Simple in-memory cache for JSON File DB to prevent continuous disk reads
 let cachedJSONData: any = null;
@@ -58,12 +58,29 @@ function saveJSONData(data: any) {
   }
 }
 
+function getBackupKey(key: string): string {
+  const mapping: { [key: string]: string } = {
+    'news': 'newsItems',
+    'gallery': 'galleryItems',
+    'alumni': 'alumniItems',
+    'seo': 'seoSettings',
+    'timeline': 'timelineEvents',
+    'calendar': 'calendarEvents',
+    'pmb_config': 'pmbConfig',
+    'popup_promo': 'popupPromo',
+    'running_texts': 'runningTexts',
+    'store_products': 'storeProducts',
+    'store_orders': 'storeOrders',
+  };
+  return mapping[key] || key;
+}
+
 export class BaseRepository {
   /**
    * Retrieves a collection array (e.g., 'news', 'gallery')
    */
   static async getCollection<T>(key: string): Promise<T[]> {
-    if (isMySQL && pool) {
+    if (getIsMySQL() && pool) {
       try {
         // If MySQL table is active, query it (with safety fallback to JSON if table missing)
         const [rows] = await pool.query(`SELECT * FROM \`${key}\``);
@@ -74,14 +91,15 @@ export class BaseRepository {
     }
 
     const data = loadJSONData();
-    return (data[key] || []) as T[];
+    const mappedKey = getBackupKey(key);
+    return (data[mappedKey] || []) as T[];
   }
 
   /**
    * Saves or overrides a collection array entirely
    */
   static async saveCollection<T>(key: string, items: T[]): Promise<void> {
-    if (isMySQL && pool) {
+    if (getIsMySQL() && pool) {
       try {
         // Clear and insert to MySQL
         await pool.query(`DELETE FROM \`${key}\``);
@@ -98,7 +116,8 @@ export class BaseRepository {
     }
 
     const data = loadJSONData();
-    data[key] = items;
+    const mappedKey = getBackupKey(key);
+    data[mappedKey] = items;
     saveJSONData(data);
   }
 
@@ -106,7 +125,7 @@ export class BaseRepository {
    * Gets a specific document or setting object by key
    */
   static async getValue<T>(key: string): Promise<T> {
-    if (isMySQL && pool) {
+    if (getIsMySQL() && pool) {
       try {
         const [rows]: any = await pool.query('SELECT data FROM site_content WHERE section = ?', [key]);
         if (rows.length > 0) {
@@ -118,14 +137,15 @@ export class BaseRepository {
     }
 
     const data = loadJSONData();
-    return (data[key] || {}) as T;
+    const mappedKey = getBackupKey(key);
+    return (data[mappedKey] || {}) as T;
   }
 
   /**
    * Saves a specific document or setting object by key
    */
   static async saveValue<T>(key: string, value: T): Promise<void> {
-    if (isMySQL && pool) {
+    if (getIsMySQL() && pool) {
       try {
         const serialized = JSON.stringify(value);
         await pool.query(
@@ -139,7 +159,8 @@ export class BaseRepository {
     }
 
     const data = loadJSONData();
-    data[key] = value;
+    const mappedKey = getBackupKey(key);
+    data[mappedKey] = value;
     saveJSONData(data);
   }
 
@@ -147,7 +168,7 @@ export class BaseRepository {
    * Insert, Update, Delete for general items inside a collection
    */
   static async findById<T extends { id: string }>(key: string, id: string): Promise<T | null> {
-    if (isMySQL && pool) {
+    if (getIsMySQL() && pool) {
       try {
         const [rows]: any = await pool.query(`SELECT * FROM \`${key}\` WHERE id = ?`, [id]);
         if (rows.length > 0) return rows[0] as T;
@@ -158,11 +179,11 @@ export class BaseRepository {
     }
 
     const items = await this.getCollection<T>(key);
-    return items.find(item => item.id === id) || null;
+    return items.find(item => String(item.id) === String(id)) || null;
   }
 
   static async insertItem<T extends { id: string }>(key: string, item: T): Promise<T> {
-    if (isMySQL && pool) {
+    if (getIsMySQL() && pool) {
       try {
         const fields = Object.keys(item);
         const placeholders = fields.map(() => '?').join(', ');
@@ -179,14 +200,15 @@ export class BaseRepository {
     }
 
     const data = loadJSONData();
-    if (!data[key]) data[key] = [];
-    data[key].push(item);
+    const mappedKey = getBackupKey(key);
+    if (!data[mappedKey]) data[mappedKey] = [];
+    data[mappedKey].push(item);
     saveJSONData(data);
     return item;
   }
 
   static async updateItem<T extends { id: string }>(key: string, id: string, updatedFields: Partial<T>): Promise<T | null> {
-    if (isMySQL && pool) {
+    if (getIsMySQL() && pool) {
       try {
         const fields = Object.keys(updatedFields);
         const setClause = fields.map(f => `\`${f}\` = ?`).join(', ');
@@ -202,11 +224,12 @@ export class BaseRepository {
     }
 
     const data = loadJSONData();
-    const items = (data[key] || []) as T[];
-    const idx = items.findIndex(item => item.id === id);
+    const mappedKey = getBackupKey(key);
+    const items = (data[mappedKey] || []) as T[];
+    const idx = items.findIndex(item => String(item.id) === String(id));
     if (idx !== -1) {
       items[idx] = { ...items[idx], ...updatedFields };
-      data[key] = items;
+      data[mappedKey] = items;
       saveJSONData(data);
       return items[idx];
     }
@@ -214,7 +237,7 @@ export class BaseRepository {
   }
 
   static async deleteItem<T extends { id: string }>(key: string, id: string): Promise<boolean> {
-    if (isMySQL && pool) {
+    if (getIsMySQL() && pool) {
       try {
         const [result]: any = await pool.query(`DELETE FROM \`${key}\` WHERE id = ?`, [id]);
         return result.affectedRows > 0;
@@ -224,10 +247,11 @@ export class BaseRepository {
     }
 
     const data = loadJSONData();
-    const items = (data[key] || []) as T[];
+    const mappedKey = getBackupKey(key);
+    const items = (data[mappedKey] || []) as T[];
     const lengthBefore = items.length;
-    data[key] = items.filter(item => item.id !== id);
+    data[mappedKey] = items.filter(item => String(item.id) !== String(id));
     saveJSONData(data);
-    return data[key].length < lengthBefore;
+    return data[mappedKey].length < lengthBefore;
   }
 }

@@ -9,7 +9,7 @@ const hasMySQLConfig = !!(
 );
 
 let pool: mysql.Pool | null = null;
-let isMySQL = false;
+let isMySQLState = false;
 
 if (hasMySQLConfig) {
   try {
@@ -27,17 +27,22 @@ if (hasMySQLConfig) {
         };
 
     pool = mysql.createPool(config);
-    isMySQL = true;
+    isMySQLState = true;
     console.log('AMC Backend: MySQL configuration detected.');
   } catch (error) {
     console.warn('AMC Backend: Failed to initialize MySQL Pool, using File-based fallback instead.');
-    isMySQL = false;
+    isMySQLState = false;
   }
 } else {
   console.log('AMC Backend: No MySQL environment variables configured. Defaulting to File-based JSON database.');
 }
 
-export { pool, isMySQL };
+export let isMySQL = isMySQLState;
+export function getIsMySQL(): boolean {
+  return isMySQLState;
+}
+
+export { pool };
 
 // Path to file-based database for fallback/local development
 export const JSON_DB_PATH = path.join(process.cwd(), 'public', 'amc_backup.json');
@@ -83,7 +88,7 @@ export async function initDB() {
     console.error('AMC Backend: Error during automatic backup/restore phase:', error);
   }
 
-  if (!isMySQL || !pool) {
+  if (!isMySQLState || !pool) {
     console.log('AMC Backend: Operating in File-Based Storage Mode using amc_backup.json.');
     return;
   }
@@ -181,6 +186,7 @@ export async function initDB() {
     } else {
       console.warn('AMC Backend: Database Connection Notice (using File-based backup fallback):', error.message || error);
     }
+    isMySQLState = false;
     isMySQL = false;
   }
 }
