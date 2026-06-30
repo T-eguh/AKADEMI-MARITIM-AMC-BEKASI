@@ -332,7 +332,6 @@ export default function App() {
     }
   });
 
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
 
   // ----------------------------------------------------
@@ -916,7 +915,6 @@ export default function App() {
       setActivityLogs(DEFAULT_LOGS);
       setSections(DEFAULT_SECTIONS);
       setIsAdminLoggedIn(false);
-      setIsAdminOpen(false);
       localStorage.clear();
       localStorage.setItem('amc_backup_loaded', 'true');
       alert('Semua konfigurasi berhasil di-reset ke default.');
@@ -1329,65 +1327,6 @@ export default function App() {
         socialMedia={translatedContent.socialMedia}
         campusProfile={translatedContent.campusProfile}
         copyright={content?.copyright}
-      />
-
-      {/* Interactive Admin Portal Panel (Overlay Control Room) */}
-      <AdminPanel
-        isOpen={isAdminOpen}
-        onClose={() => {
-          setIsAdminOpen(false);
-          setIsAdminLoggedIn(false); // Secure: force logout on exiting admin panel
-        }}
-        images={images}
-        onUpdateImages={setImages}
-        content={content}
-        onUpdateContent={setContent}
-        newsItems={newsItems}
-        onUpdateNews={setNewsItems}
-        facilities={facilities}
-        onUpdateFacilities={setFacilities}
-        galleryItems={galleryItems}
-        onUpdateGallery={setGalleryItems}
-        applications={applications}
-        onUpdateApplications={setApplications}
-        alumniItems={alumniItems}
-        onUpdateAlumni={setAlumniItems}
-        seoSettings={seoSettings}
-        onUpdateSEO={setSeoSettings}
-        users={users}
-        onUpdateUsers={setUsers}
-        mediaItems={mediaItems}
-        onUpdateMedia={setMediaItems}
-        activityLogs={activityLogs}
-        onUpdateLogs={setActivityLogs}
-        isLoggedIn={isAdminLoggedIn}
-        onLoginStatusChange={setIsAdminLoggedIn}
-        onResetToDefaults={handleResetToDefaults}
-        onSaveAllToServer={handleSaveAllToServer}
-        timelineEvents={timelineEvents}
-        onUpdateTimelineEvents={setTimelineEvents}
-        lecturers={lecturers}
-        onUpdateLecturers={setLecturers}
-        calendarEvents={calendarEvents}
-        onUpdateCalendarEvents={setCalendarEvents}
-        programs={programs}
-        onUpdatePrograms={setPrograms}
-        pmbConfig={pmbConfig}
-        onUpdatePMBConfig={setPmbConfig}
-        banners={banners}
-        onUpdateBanners={setBanners}
-        popupPromo={popupPromo}
-        onUpdatePopupPromo={setPopupPromo}
-        runningTexts={runningTexts}
-        onUpdateRunningTexts={setRunningTexts}
-        announcements={announcements}
-        onUpdateAnnouncements={setAnnouncements}
-        storeProducts={storeProducts}
-        onUpdateStoreProducts={setStoreProducts}
-        storeOrders={storeOrders}
-        onUpdateStoreOrders={setStoreOrders}
-        sections={sections}
-        onUpdateSections={setSections}
       />
 
       {/* Global Promotional Overlays & Contact Portals */}

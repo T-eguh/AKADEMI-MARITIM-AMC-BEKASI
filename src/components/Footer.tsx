@@ -210,14 +210,16 @@ export default function Footer({
           <div className="flex items-center space-x-6">
             <span className="text-[10px] tracking-wide text-gray-600">Standardized & Built in 2026</span>
             
-            {/* Hidden/discrete portal link to trigger Admin Dashboard */}
-            <button
-              onClick={onOpenAdmin}
-              className="flex items-center space-x-1 hover:text-white transition-colors border border-dashed border-gray-800 hover:border-gray-600 px-2 py-1 rounded cursor-pointer"
-            >
-              <Lock className="h-3 w-3" />
-              <span>{isAdminLoggedIn ? 'Buka Panel Admin' : 'Portal Staf Admin'}</span>
-            </button>
+            {/* Show only if logged in, otherwise completely hidden from public visitors */}
+            {isAdminLoggedIn && (
+              <button
+                onClick={onOpenAdmin}
+                className="flex items-center space-x-1 hover:text-white transition-colors border border-dashed border-gray-800 hover:border-gray-600 px-2 py-1 rounded cursor-pointer"
+              >
+                <Lock className="h-3 w-3" />
+                <span>Buka Panel Admin</span>
+              </button>
+            )}
           </div>
         </div>
 

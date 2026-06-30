@@ -449,23 +449,13 @@ export default function Header({
             </div>
 
             {/* Admin Access Panel */}
-            {isAdminLoggedIn ? (
+            {isAdminLoggedIn && (
               <button
                 onClick={onOpenAdmin}
                 className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all cursor-pointer"
               >
                 <LayoutDashboard className="h-3.5 w-3.5" />
                 <span>{lang === 'en' ? 'Admin Panel' : 'Panel Admin'}</span>
-              </button>
-            ) : (
-              <button
-                onClick={onOpenAdmin}
-                className={`flex items-center justify-center p-2 rounded-lg transition-colors cursor-pointer ${
-                  isScrolled ? 'text-gray-500 hover:text-navy-800 hover:bg-gray-100' : 'text-gray-300 hover:text-white hover:bg-white/10'
-                }`}
-                title={lang === 'en' ? 'Admin Portal' : 'Portal Admin'}
-              >
-                <Lock className="h-4 w-4" />
               </button>
             )}
 
@@ -696,16 +686,18 @@ export default function Header({
                 {lang === 'en' ? 'Apply PMB 2026' : 'Daftar PMB 2026'}
               </button>
               
-              <button
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  onOpenAdmin();
-                }}
-                className="w-full flex items-center justify-center space-x-2 border border-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors cursor-pointer"
-              >
-                <Lock className="h-4 w-4" />
-                <span>{isAdminLoggedIn ? (lang === 'en' ? 'Open Admin Panel' : 'Buka Panel Admin') : (lang === 'en' ? 'Login Admin Portal' : 'Login Portal Admin')}</span>
-              </button>
+              {isAdminLoggedIn && (
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    onOpenAdmin();
+                  }}
+                  className="w-full flex items-center justify-center space-x-2 border border-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors cursor-pointer"
+                >
+                  <Lock className="h-4 w-4" />
+                  <span>{lang === 'en' ? 'Open Admin Panel' : 'Buka Panel Admin'}</span>
+                </button>
+              )}
             </div>
 
           </div>
