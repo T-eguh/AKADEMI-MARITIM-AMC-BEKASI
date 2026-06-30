@@ -143,6 +143,8 @@ export interface SiteContent {
   email?: string;
   address?: string;
   mapsEmbed?: string;
+  siteName?: string;
+  copyright?: string;
 }
 
 export interface AlumniItem {
@@ -183,12 +185,13 @@ export interface UserItem {
   id: string;
   username: string;
   fullName: string;
-  role: 'Super Admin' | 'Admin' | 'Editor' | 'News Admin' | 'PMB Admin';
+  role: 'Super Admin' | 'Admin' | 'Editor' | 'News Admin' | 'PMB Admin' | 'Operator PMB' | 'Operator Store' | 'Viewer';
   email: string;
   avatar?: string;
   status?: 'Aktif' | 'Nonaktif';
   lastLogin?: string;
   password?: string;
+  permissions?: string[];
 }
 
 export interface MediaItem {

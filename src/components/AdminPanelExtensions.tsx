@@ -519,6 +519,15 @@ const processAlumniImage = (
   };
 
   // 3. USERS STATES & HANDLERS
+  const DEFAULT_PERMISSIONS_BY_ROLE: Record<string, string[]> = {
+    'Super Admin': ['Dashboard', 'Hero', 'About', 'Programs', 'Facilities', 'Gallery', 'News', 'PMB', 'Store', 'SEO', 'Settings', 'Backup', 'Restore', 'Admin'],
+    'Admin': ['Dashboard', 'Hero', 'About', 'Programs', 'Facilities', 'Gallery', 'News', 'PMB', 'Store', 'SEO', 'Settings', 'Backup', 'Restore'],
+    'Editor': ['Dashboard', 'Hero', 'About', 'Gallery', 'News'],
+    'Operator PMB': ['Dashboard', 'PMB'],
+    'Operator Store': ['Dashboard', 'Store'],
+    'Viewer': ['Dashboard', 'About', 'Programs']
+  };
+
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [userForm, setUserForm] = useState<Omit<UserItem, 'id'>>({
     fullName: '',
@@ -527,7 +536,8 @@ const processAlumniImage = (
     role: 'Editor',
     avatar: '',
     status: 'Aktif',
-    password: ''
+    password: '',
+    permissions: ['Dashboard', 'Hero', 'About', 'Gallery', 'News']
   });
 
   const handleSaveUser = (e: React.FormEvent) => {
@@ -540,13 +550,15 @@ const processAlumniImage = (
       };
       onUpdateUsers([...users, newUser]);
       addLog('Tambah User', `Menambahkan pengguna baru: ${newUser.fullName} (${newUser.role})`);
+      showToast('Hak akses administrator baru berhasil dibuat.', 'success');
     } else if (editingUserId) {
       const updated = users.map(u => u.id === editingUserId ? { ...u, ...userForm } : u);
       onUpdateUsers(updated);
       addLog('Edit User', `Mengedit hak akses pengguna: ${userForm.fullName}`);
+      showToast('Pembaruan akun administrator berhasil disimpan.', 'success');
     }
     setEditingUserId(null);
-    setUserForm({ fullName: '', email: '', username: '', role: 'Editor', avatar: '', status: 'Aktif', password: '' });
+    setUserForm({ fullName: '', email: '', username: '', role: 'Editor', avatar: '', status: 'Aktif', password: '', permissions: ['Dashboard', 'Hero', 'About', 'Gallery', 'News'] });
   };
 
   const handleDeleteUser = (id: string, name: string) => {
@@ -1315,7 +1327,16 @@ const processAlumniImage = (
               <button
                 onClick={() => {
                   setEditingUserId('new');
-                  setUserForm({ fullName: '', email: '', username: '', role: 'Editor' });
+                  setUserForm({ 
+                    fullName: '', 
+                    email: '', 
+                    username: '', 
+                    role: 'Editor',
+                    avatar: '',
+                    status: 'Aktif',
+                    password: '',
+                    permissions: ['Dashboard', 'Hero', 'About', 'Gallery', 'News']
+                  });
                 }}
                 className="inline-flex items-center space-x-2 bg-navy-800 hover:bg-navy-900 text-white font-bold py-2.5 px-4 rounded-xl shadow transition"
               >
@@ -1398,18 +1419,56 @@ const processAlumniImage = (
                   </select>
                 </div>
 
-                {/* Role selection */}
+                 {/* Role selection */}
                 <div className="space-y-1">
                   <label className="text-slate-700 font-bold block">Hak Peran (System Role)</label>
                   <select
                     value={userForm.role}
-                    onChange={e => setUserForm({ ...userForm, role: e.target.value as 'Super Admin' | 'Admin' | 'Editor' | 'News Admin' | 'PMB Admin' })}
+                    onChange={e => {
+                      const newRole = e.target.value as any;
+                      const standardPerms = DEFAULT_PERMISSIONS_BY_ROLE[newRole] || [];
+                      setUserForm({ ...userForm, role: newRole, permissions: standardPerms });
+                    }}
                     className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg"
                   >
                     <option value="Super Admin">Super Admin (Akses penuh seluruh kontrol room)</option>
                     <option value="Admin">Admin (Akses penuh panel admin dasar)</option>
-                    <option value="Editor">Editor Akademik (Mengelola berita, alumni, dan gambar)</option>
+                    <option value="Editor">Editor (Mengelola berita, alumni, dan gambar)</option>
+                    <option value="Operator PMB">Operator PMB (Mengelola pendaftaran taruna baru)</option>
+                    <option value="Operator Store">Operator Store (Mengelola produk & pesanan AMC Store)</option>
+                    <option value="Viewer">Viewer (Hanya dapat membaca data tanpa mengedit)</option>
                   </select>
+                </div>
+
+                {/* Custom Permissions Select */}
+                <div className="space-y-2 bg-slate-50 p-3 rounded-xl border">
+                  <label className="text-slate-700 font-bold block mb-1">Pilih Hak Akses Fitur (Custom Permissions)</label>
+                  <p className="text-[10px] text-slate-500 mb-2">Pilih menu mana saja yang boleh diakses/dikelola oleh akun ini.</p>
+                  <div className="grid grid-cols-2 gap-2 text-[10px]">
+                    {['Dashboard', 'Hero', 'About', 'Programs', 'Facilities', 'Gallery', 'News', 'PMB', 'Store', 'SEO', 'Settings', 'Backup', 'Restore', 'Admin'].map(perm => {
+                      const isChecked = userForm.permissions?.includes(perm) || false;
+                      return (
+                        <label key={perm} className="flex items-center space-x-1.5 p-1.5 bg-white border rounded hover:bg-slate-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={e => {
+                              const currentPerms = userForm.permissions || [];
+                              let nextPerms = [];
+                              if (e.target.checked) {
+                                nextPerms = [...currentPerms, perm];
+                              } else {
+                                nextPerms = currentPerms.filter(p => p !== perm);
+                              }
+                              setUserForm({ ...userForm, permissions: nextPerms });
+                            }}
+                            className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-3 w-3"
+                          />
+                          <span className="font-medium text-slate-700">{perm}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Foto Profil / Avatar */}
@@ -1486,6 +1545,9 @@ const processAlumniImage = (
                     <option value="Super Admin">Super Admin</option>
                     <option value="Admin">Admin</option>
                     <option value="Editor">Editor</option>
+                    <option value="Operator PMB">Operator PMB</option>
+                    <option value="Operator Store">Operator Store</option>
+                    <option value="Viewer">Viewer</option>
                   </select>
                 </div>
               </div>
@@ -1545,15 +1607,28 @@ const processAlumniImage = (
                               </td>
                               <td className="p-4 font-mono font-bold text-navy-800">{u.username}</td>
                               <td className="p-4">
-                                <span className={`px-2.5 py-1 rounded-full font-bold text-[9px] uppercase tracking-wider ${
-                                  u.role === 'Super Admin' 
-                                    ? 'bg-rose-50 text-rose-700 border border-rose-100'
-                                    : u.role === 'Editor'
-                                    ? 'bg-blue-50 text-blue-700 border border-blue-100'
-                                    : 'bg-amber-50 text-amber-700 border border-amber-100'
-                                }`}>
-                                  {u.role}
-                                </span>
+                                <div className="space-y-1">
+                                  <span className={`px-2.5 py-1 rounded-full font-bold text-[9px] uppercase tracking-wider ${
+                                    u.role === 'Super Admin' 
+                                      ? 'bg-rose-50 text-rose-700 border border-rose-100'
+                                      : u.role === 'Editor'
+                                      ? 'bg-blue-50 text-blue-700 border border-blue-100'
+                                      : u.role === 'Viewer'
+                                      ? 'bg-slate-100 text-slate-700 border border-slate-200'
+                                      : 'bg-amber-50 text-amber-700 border border-amber-100'
+                                  }`}>
+                                    {u.role}
+                                  </span>
+                                  {u.permissions && u.permissions.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-1 max-w-[200px]">
+                                      {u.permissions.map(p => (
+                                        <span key={p} className="bg-slate-50 text-slate-500 text-[8px] font-medium px-1 py-0.5 rounded border border-slate-150">
+                                          {p}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                               </td>
                               <td className="p-4 text-center">
                                 <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
@@ -1578,7 +1653,8 @@ const processAlumniImage = (
                                       role: u.role,
                                       avatar: u.avatar || '',
                                       status: u.status || 'Aktif',
-                                      password: ''
+                                      password: '',
+                                      permissions: u.permissions || DEFAULT_PERMISSIONS_BY_ROLE[u.role] || []
                                     });
                                   }}
                                   className="p-1.5 bg-slate-100 hover:bg-gold-500 hover:text-navy-950 rounded-lg text-slate-600 transition cursor-pointer"
@@ -2644,77 +2720,340 @@ const processAlumniImage = (
                 </div>
               </form>
             </div>
-          ) : (
+          ) : (() => {
+            const filteredProducts = storeProducts
+              .filter(product => {
+                const matchesSearch = product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+                  product.description.toLowerCase().includes(productSearch.toLowerCase());
+                const matchesCategory = productFilterCategory === 'all' || product.category === productFilterCategory;
+                return matchesSearch && matchesCategory;
+              })
+              .sort((a, b) => {
+                if (productSortBy === 'price_asc') return a.price - b.price;
+                if (productSortBy === 'price_desc') return b.price - a.price;
+                if (productSortBy === 'stock_asc') return a.stock - b.stock;
+                if (productSortBy === 'stock_desc') return b.stock - a.stock;
+                return a.name.localeCompare(b.name);
+              });
+
+            const totalProductPages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE));
+            const currentPage = Math.min(productPage, totalProductPages);
+            const paginatedProducts = filteredProducts.slice(
+              (currentPage - 1) * PRODUCTS_PER_PAGE,
+              currentPage * PRODUCTS_PER_PAGE
+            );
+
+            return (
+              <div className="space-y-4">
+                {/* Search & Filter Bar */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                    <input
+                      type="text"
+                      value={productSearch}
+                      onChange={e => { setProductSearch(e.target.value); setProductPage(1); }}
+                      placeholder="Cari nama atau deskripsi produk..."
+                      className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs"
+                    />
+                  </div>
+                  <div>
+                    <select
+                      value={productFilterCategory}
+                      onChange={e => { setProductFilterCategory(e.target.value); setProductPage(1); }}
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold"
+                    >
+                      <option value="all">Semua Kategori</option>
+                      <option value="Uniform">Seragam / Atribut Dinas (PDH/PDL)</option>
+                      <option value="Merchandise">Merchandise & Aksesoris</option>
+                      <option value="Buku">Buku & Modul Kuliah</option>
+                    </select>
+                  </div>
+                  <div>
+                    <select
+                      value={productSortBy}
+                      onChange={e => { setProductSortBy(e.target.value); }}
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold"
+                    >
+                      <option value="name">Urutkan: Nama (A-Z)</option>
+                      <option value="price_asc">Harga Terendah</option>
+                      <option value="price_desc">Harga Tertinggi</option>
+                      <option value="stock_asc">Stok Terkecil</option>
+                      <option value="stock_desc">Stok Terbanyak</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-200 font-display text-navy-950 font-bold uppercase tracking-wider text-[10px]">
+                          <th className="p-4">Produk</th>
+                          <th className="p-4">Kategori</th>
+                          <th className="p-4">Harga (Rp)</th>
+                          <th className="p-4 text-center">Stok</th>
+                          <th className="p-4 text-center">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {paginatedProducts.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="p-8 text-center text-slate-400">Belum ada katalog produk yang cocok.</td>
+                          </tr>
+                        ) : (
+                          paginatedProducts.map(product => (
+                            <tr key={product.id} className="hover:bg-slate-50/50">
+                              <td className="p-4 flex items-center space-x-3">
+                                <div className="w-10 h-10 rounded-lg overflow-hidden border bg-slate-50 shrink-0">
+                                  <img src={product.image || product.imageUrl || 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=600'} alt={product.name} className="w-full h-full object-cover" />
+                                </div>
+                                <div>
+                                  <div className="font-bold text-navy-950 text-xs">{product.name}</div>
+                                  <div className="text-[10px] text-slate-400 mt-0.5 max-w-[200px] truncate">{product.description}</div>
+                                </div>
+                              </td>
+                              <td className="p-4 font-bold text-navy-800 text-[11px] whitespace-nowrap">
+                                {product.category}
+                              </td>
+                              <td className="p-4 font-mono font-bold text-slate-700 whitespace-nowrap">
+                                Rp {product.price.toLocaleString('id-ID')}
+                              </td>
+                              <td className="p-4 text-center font-mono font-bold text-slate-800">
+                                {product.stock} pcs
+                              </td>
+                              <td className="p-4 text-center space-x-2 whitespace-nowrap">
+                                <button
+                                  onClick={() => {
+                                    setEditingProductId(product.id);
+                                    setProductForm({
+                                      ...product,
+                                      image: product.image || product.imageUrl || ''
+                                    });
+                                  }}
+                                  className="p-1.5 bg-slate-100 hover:bg-gold-500 hover:text-navy-950 rounded-lg text-slate-600 transition cursor-pointer"
+                                >
+                                  <Edit2 className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (!product.id) {
+                                      showToast('ID Produk tidak valid.', 'error');
+                                      return;
+                                    }
+                                    requestConfirm('Hapus Produk', `Apakah Anda yakin ingin menghapus produk "${product.name}"?`, async () => {
+                                      try {
+                                        await ApiService.deleteItem('store_products', product.id);
+                                        onUpdateStoreProducts(storeProducts.filter(p => p.id !== product.id));
+                                        addLog('Hapus Produk Store', `Menghapus produk: ${product.name}`);
+                                        showToast('Produk berhasil dihapus.', 'success');
+                                      } catch (err: any) {
+                                        console.error('Gagal menghapus produk:', err);
+                                        showToast('Gagal menghapus produk dari server.', 'error');
+                                      }
+                                    });
+                                  }}
+                                  className="p-1.5 bg-red-50 hover:bg-red-500 hover:text-white rounded-lg text-red-600 transition cursor-pointer"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Pagination Footer */}
+                  {totalProductPages > 1 && (
+                    <div className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-[10px] text-slate-500 font-bold">
+                        Halaman {currentPage} dari {totalProductPages}
+                      </span>
+                      <div className="flex space-x-1">
+                        <button
+                          onClick={() => setProductPage(prev => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          className="p-1.5 rounded bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50 text-xs font-bold cursor-pointer"
+                        >
+                          Sebelumnya
+                        </button>
+                        <button
+                          onClick={() => setProductPage(prev => Math.min(totalProductPages, prev + 1))}
+                          disabled={currentPage === totalProductPages}
+                          className="p-1.5 rounded bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50 text-xs font-bold cursor-pointer"
+                        >
+                          Berikutnya
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
+      {/* ==================== 10. STORE ORDERS (DAFTAR PESANAN MASUK) ==================== */}
+      {activeTab === 'store_orders' && (() => {
+        const filteredOrders = storeOrders
+          .filter(order => {
+            const query = orderSearch.toLowerCase();
+            const matchesSearch = 
+              (order.id || '').toLowerCase().includes(query) ||
+              (order.buyerName || order.customerName || '').toLowerCase().includes(query) ||
+              (order.buyerNIM || '').toLowerCase().includes(query) ||
+              (order.productName || '').toLowerCase().includes(query);
+            const matchesStatus = orderFilterStatus === 'all' || order.status === orderFilterStatus;
+            return matchesSearch && matchesStatus;
+          });
+
+        const totalOrderPages = Math.max(1, Math.ceil(filteredOrders.length / ORDERS_PER_PAGE));
+        const currentPage = Math.min(orderPage, totalOrderPages);
+        const paginatedOrders = filteredOrders.slice(
+          (currentPage - 1) * ORDERS_PER_PAGE,
+          currentPage * ORDERS_PER_PAGE
+        );
+
+        return (
+          <div className="space-y-6 animate-fade-in text-xs font-sans">
+            <div>
+              <h3 className="font-display font-extrabold text-lg text-navy-950 flex items-center gap-2">
+                <FileText className="h-5 w-5 text-gold-600" />
+                Kelola Pesanan Masuk (AMC Store)
+              </h3>
+              <p className="text-slate-500 mt-0.5">Pantau pesanan perlengkapan dari taruna, periksa foto bukti transfer bank, dan perbarui status pesanan secara real-time.</p>
+            </div>
+
+            {/* Search & Filter Bar */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={orderSearch}
+                  onChange={e => { setOrderSearch(e.target.value); setOrderPage(1); }}
+                  placeholder="Cari ID Pesanan, Nama, NIM, atau Nama Produk..."
+                  className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs"
+                />
+              </div>
+              <div>
+                <select
+                  value={orderFilterStatus}
+                  onChange={e => { setOrderFilterStatus(e.target.value); setOrderPage(1); }}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold"
+                >
+                  <option value="all">Semua Status Pesanan</option>
+                  <option value="Pending">Menunggu Verifikasi (Pending)</option>
+                  <option value="Paid">Lunas & Diproses (Paid)</option>
+                  <option value="Shipped">Sudah Diambil/Dikirim (Shipped)</option>
+                  <option value="Cancelled">Dibatalkan (Cancelled)</option>
+                </select>
+              </div>
+            </div>
+
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-200 font-display text-navy-950 font-bold uppercase tracking-wider text-[10px]">
-                      <th className="p-4">Produk</th>
-                      <th className="p-4">Kategori</th>
-                      <th className="p-4">Harga (Rp)</th>
-                      <th className="p-4 text-center">Stok</th>
+                      <th className="p-4">ID / Tanggal</th>
+                      <th className="p-4">Pendaftar / Taruna</th>
+                      <th className="p-4">Produk yang Dipesan</th>
+                      <th className="p-4 text-center">Bukti Transfer</th>
+                      <th className="p-4 text-center">Status Pesanan</th>
                       <th className="p-4 text-center">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {storeProducts.length === 0 ? (
+                    {paginatedOrders.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="p-8 text-center text-slate-400">Belum ada katalog produk. Klik 'Tambah Produk' untuk membuat baru.</td>
+                        <td colSpan={6} className="p-12 text-center text-slate-400">Belum ada data pesanan yang cocok.</td>
                       </tr>
                     ) : (
-                      storeProducts.map(product => (
-                        <tr key={product.id} className="hover:bg-slate-50/50">
-                          <td className="p-4 flex items-center space-x-3">
-                            <div className="w-10 h-10 rounded-lg overflow-hidden border bg-slate-50 shrink-0">
-                              <img src={product.image || product.imageUrl || 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=600'} alt={product.name} className="w-full h-full object-cover" />
-                            </div>
-                            <div>
-                              <div className="font-bold text-navy-950 text-xs">{product.name}</div>
-                              <div className="text-[10px] text-slate-400 mt-0.5 max-w-[200px] truncate">{product.description}</div>
+                      paginatedOrders.map(order => (
+                        <tr key={order.id} className="hover:bg-slate-50/50">
+                          <td className="p-4 whitespace-nowrap">
+                            <div className="font-bold text-navy-950 font-mono text-[11px]">{order.id}</div>
+                            <div className="text-[10px] text-slate-400 mt-0.5 font-mono">
+                              {order.orderDate || order.date || order.createdAt || '-'}
                             </div>
                           </td>
-                          <td className="p-4 font-bold text-navy-800 text-[11px] whitespace-nowrap">
-                            {product.category}
+                          <td className="p-4">
+                            <div className="font-bold text-slate-800">
+                              {order.buyerName || order.customerName || 'Pelanggan'}
+                            </div>
+                            <div className="text-[10px] text-slate-400 mt-0.5">
+                              NIM: {order.buyerNIM || 'Umum'} • {order.buyerPhone || order.customerPhone || '-'}
+                            </div>
                           </td>
-                          <td className="p-4 font-mono font-bold text-slate-700 whitespace-nowrap">
-                            Rp {product.price.toLocaleString('id-ID')}
+                          <td className="p-4">
+                            <div className="font-bold text-navy-900 text-xs">
+                              {order.productName || (order.items && order.items.map(item => `${item.productName} (x${item.quantity})`).join(', ')) || 'Produk'}
+                            </div>
+                            <div className="text-[10px] text-slate-500 mt-0.5">
+                              {(order.quantity || (order.items && order.items.reduce((acc, curr) => acc + curr.quantity, 0)) || 1)} pcs • Total: <strong className="text-slate-900 font-mono">Rp {(order.totalPrice || order.totalAmount || 0).toLocaleString('id-ID')}</strong>
+                            </div>
                           </td>
-                          <td className="p-4 text-center font-mono font-bold text-slate-800">
-                            {product.stock} pcs
+                          <td className="p-4 text-center">
+                            {order.receiptImage ? (
+                              <a
+                                href={order.receiptImage}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center space-x-1 text-indigo-600 hover:text-indigo-900 font-bold bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100"
+                              >
+                                <ImageIcon className="w-3.5 h-3.5" />
+                                <span>Lihat Bukti</span>
+                              </a>
+                            ) : (
+                              <span className="text-[10px] text-slate-400 font-bold bg-slate-50 border px-2.5 py-1 rounded-lg">WhatsApp Order</span>
+                            )}
                           </td>
-                          <td className="p-4 text-center space-x-2 whitespace-nowrap">
-                            <button
-                              onClick={() => {
-                                setEditingProductId(product.id);
-                                setProductForm({
-                                  ...product,
-                                  image: product.image || product.imageUrl || ''
-                                });
+                          <td className="p-4 text-center whitespace-nowrap">
+                            <select
+                              value={order.status}
+                              onChange={(e) => {
+                                const updated = storeOrders.map(o => o.id === order.id ? { ...o, status: e.target.value as any } : o);
+                                onUpdateStoreOrders(updated);
+                                addLog('Update Status Pesanan', `Mengubah status pesanan ${order.id} menjadi: ${e.target.value}`);
                               }}
-                              className="p-1.5 bg-slate-100 hover:bg-gold-500 hover:text-navy-950 rounded-lg text-slate-600 transition cursor-pointer"
+                              className={`px-2.5 py-1 rounded-xl text-[10px] font-extrabold uppercase border transition ${
+                                order.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                order.status === 'Shipped' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                                order.status === 'Cancelled' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                                'bg-amber-50 text-amber-700 border-amber-200 animate-pulse'
+                              }`}
                             >
-                              <Edit2 className="h-3.5 w-3.5" />
-                            </button>
+                              <option value="Pending">Menunggu Verifikasi</option>
+                              <option value="Paid">Lunas (Disiapkan)</option>
+                              <option value="Shipped">Sudah Diambil/Kirim</option>
+                              <option value="Cancelled">Dibatalkan</option>
+                            </select>
+                          </td>
+                          <td className="p-4 text-center">
                             <button
                               onClick={() => {
-                                if (!product.id) {
-                                  showToast('ID Produk tidak valid.', 'error');
+                                if (!order.id) {
+                                  showToast('ID Pesanan tidak valid.', 'error');
                                   return;
                                 }
-                                requestConfirm('Hapus Produk', `Apakah Anda yakin ingin menghapus produk "${product.name}"?`, async () => {
+                                requestConfirm('Hapus Pesanan', `Apakah Anda yakin ingin menghapus data pesanan "${order.id}" dari arsip?`, async () => {
                                   try {
-                                    await ApiService.deleteItem('store_products', product.id);
-                                    onUpdateStoreProducts(storeProducts.filter(p => p.id !== product.id));
-                                    addLog('Hapus Produk Store', `Menghapus produk: ${product.name}`);
-                                    showToast('Produk berhasil dihapus.', 'success');
+                                    await ApiService.deleteItem('store_orders', order.id);
+                                    onUpdateStoreOrders(storeOrders.filter(o => o.id !== order.id));
+                                    addLog('Hapus Pesanan', `Menghapus data transaksi: ${order.id}`);
+                                    showToast('Pesanan berhasil dihapus.', 'success');
                                   } catch (err: any) {
-                                    console.error('Gagal menghapus produk:', err);
-                                    showToast('Gagal menghapus produk dari server.', 'error');
+                                    console.error('Gagal menghapus pesanan:', err);
+                                    showToast('Gagal menghapus pesanan dari server.', 'error');
                                   }
                                 });
                               }}
                               className="p-1.5 bg-red-50 hover:bg-red-500 hover:text-white rounded-lg text-red-600 transition cursor-pointer"
+                              title="Hapus data pesanan"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
@@ -2725,135 +3064,35 @@ const processAlumniImage = (
                   </tbody>
                 </table>
               </div>
-            </div>
-          )}
-        </div>
-      )}
 
-      {/* ==================== 10. STORE ORDERS (DAFTAR PESANAN MASUK) ==================== */}
-      {activeTab === 'store_orders' && (
-        <div className="space-y-6 animate-fade-in text-xs font-sans">
-          <div>
-            <h3 className="font-display font-extrabold text-lg text-navy-950 flex items-center gap-2">
-              <FileText className="h-5 w-5 text-gold-600" />
-              Kelola Pesanan Masuk (AMC Store)
-            </h3>
-            <p className="text-slate-500 mt-0.5">Pantau pesanan perlengkapan dari taruna, periksa foto bukti transfer bank, dan perbarui status pesanan secara real-time.</p>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 font-display text-navy-950 font-bold uppercase tracking-wider text-[10px]">
-                    <th className="p-4">ID / Tanggal</th>
-                    <th className="p-4">Pendaftar / Taruna</th>
-                    <th className="p-4">Produk yang Dipesan</th>
-                    <th className="p-4 text-center">Bukti Transfer</th>
-                    <th className="p-4 text-center">Status Pesanan</th>
-                    <th className="p-4 text-center">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {storeOrders.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="p-12 text-center text-slate-400">Belum ada pesanan masuk di AMC Store.</td>
-                    </tr>
-                  ) : (
-                    storeOrders.map(order => (
-                      <tr key={order.id} className="hover:bg-slate-50/50">
-                        <td className="p-4 whitespace-nowrap">
-                          <div className="font-bold text-navy-950 font-mono text-[11px]">{order.id}</div>
-                          <div className="text-[10px] text-slate-400 mt-0.5 font-mono">
-                            {order.orderDate || order.date || order.createdAt || '-'}
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div className="font-bold text-slate-800">
-                            {order.buyerName || order.customerName || 'Pelanggan'}
-                          </div>
-                          <div className="text-[10px] text-slate-400 mt-0.5">
-                            NIM: {order.buyerNIM || 'Umum'} • {order.buyerPhone || order.customerPhone || '-'}
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div className="font-bold text-navy-900 text-xs">
-                            {order.productName || (order.items && order.items.map(item => `${item.productName} (x${item.quantity})`).join(', ')) || 'Produk'}
-                          </div>
-                          <div className="text-[10px] text-slate-500 mt-0.5">
-                            {(order.quantity || (order.items && order.items.reduce((acc, curr) => acc + curr.quantity, 0)) || 1)} pcs • Total: <strong className="text-slate-900 font-mono">Rp {(order.totalPrice || order.totalAmount || 0).toLocaleString('id-ID')}</strong>
-                          </div>
-                        </td>
-                        <td className="p-4 text-center">
-                          {order.receiptImage ? (
-                            <a
-                              href={order.receiptImage}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center space-x-1 text-indigo-600 hover:text-indigo-900 font-bold bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100"
-                            >
-                              <ImageIcon className="w-3.5 h-3.5" />
-                              <span>Lihat Bukti</span>
-                            </a>
-                          ) : (
-                            <span className="text-[10px] text-slate-400 font-bold bg-slate-50 border px-2.5 py-1 rounded-lg">WhatsApp Order</span>
-                          )}
-                        </td>
-                        <td className="p-4 text-center whitespace-nowrap">
-                          <select
-                            value={order.status}
-                            onChange={(e) => {
-                              const updated = storeOrders.map(o => o.id === order.id ? { ...o, status: e.target.value as any } : o);
-                              onUpdateStoreOrders(updated);
-                              addLog('Update Status Pesanan', `Mengubah status pesanan ${order.id} menjadi: ${e.target.value}`);
-                            }}
-                            className={`px-2.5 py-1 rounded-xl text-[10px] font-extrabold uppercase border transition ${
-                              order.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                              order.status === 'Shipped' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
-                              order.status === 'Cancelled' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                              'bg-amber-50 text-amber-700 border-amber-200 animate-pulse'
-                            }`}
-                          >
-                            <option value="Pending">Menunggu Verifikasi</option>
-                            <option value="Paid">Lunas (Disiapkan)</option>
-                            <option value="Shipped">Sudah Diambil/Kirim</option>
-                            <option value="Cancelled">Dibatalkan</option>
-                          </select>
-                        </td>
-                        <td className="p-4 text-center">
-                          <button
-                            onClick={() => {
-                              if (!order.id) {
-                                showToast('ID Pesanan tidak valid.', 'error');
-                                return;
-                              }
-                              requestConfirm('Hapus Pesanan', `Apakah Anda yakin ingin menghapus data pesanan "${order.id}" dari arsip?`, async () => {
-                                try {
-                                  await ApiService.deleteItem('store_orders', order.id);
-                                  onUpdateStoreOrders(storeOrders.filter(o => o.id !== order.id));
-                                  addLog('Hapus Pesanan', `Menghapus data transaksi: ${order.id}`);
-                                  showToast('Pesanan berhasil dihapus.', 'success');
-                                } catch (err: any) {
-                                  console.error('Gagal menghapus pesanan:', err);
-                                  showToast('Gagal menghapus pesanan dari server.', 'error');
-                                }
-                              });
-                            }}
-                            className="p-1.5 bg-red-50 hover:bg-red-500 hover:text-white rounded-lg text-red-600 transition cursor-pointer"
-                            title="Hapus data pesanan"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+              {/* Pagination Footer */}
+              {totalOrderPages > 1 && (
+                <div className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-[10px] text-slate-500 font-bold">
+                    Halaman {currentPage} dari {totalOrderPages}
+                  </span>
+                  <div className="flex space-x-1">
+                    <button
+                      onClick={() => setOrderPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="p-1.5 rounded bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50 text-xs font-bold cursor-pointer"
+                    >
+                      Sebelumnya
+                    </button>
+                    <button
+                      onClick={() => setOrderPage(prev => Math.min(totalOrderPages, prev + 1))}
+                      disabled={currentPage === totalOrderPages}
+                      className="p-1.5 rounded bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50 text-xs font-bold cursor-pointer"
+                    >
+                      Berikutnya
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ==================== 11. NEWS CATEGORIES (KATEGORI ARTIKEL BERITA) ==================== */}
       {activeTab === 'news_categories' && (
@@ -3230,7 +3469,7 @@ const processAlumniImage = (
                 if (content) {
                   onUpdateContent({ ...content });
                   addLog('Update Kontak Kampus', 'Memperbarui koordinat kontak, nomor WhatsApp, email, dan Google Maps.');
-                  alert('Kontak Kampus berhasil disimpan dan disinkronisasikan!');
+                  showToast('Kontak Kampus berhasil disimpan dan disinkronisasikan!', 'success');
                 }
               }}
               className="space-y-4"
@@ -3240,8 +3479,8 @@ const processAlumniImage = (
                   <label className="text-slate-700 font-bold block">Nomor Telepon Kantor (Telephone)</label>
                   <input
                     type="text"
-                    value={content?.phone || '(021) 88391234'}
-                    onChange={e => onUpdateContent({ ...content!, phone: e.target.value })}
+                    value={content?.contact?.phone || '(021) 88391234'}
+                    onChange={e => onUpdateContent({ ...content!, contact: { ...content!.contact!, phone: e.target.value } })}
                     className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono font-bold"
                   />
                 </div>
@@ -3249,8 +3488,8 @@ const processAlumniImage = (
                   <label className="text-slate-700 font-bold block">WhatsApp Hot-Line (Pendaftaran Taruna)</label>
                   <input
                     type="text"
-                    value={content?.whatsapp || '081234567890'}
-                    onChange={e => onUpdateContent({ ...content!, whatsapp: e.target.value })}
+                    value={content?.contact?.whatsapp || '081234567890'}
+                    onChange={e => onUpdateContent({ ...content!, contact: { ...content!.contact!, whatsapp: e.target.value } })}
                     placeholder="Contoh: 081290901234"
                     className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono font-bold"
                   />
@@ -3261,8 +3500,8 @@ const processAlumniImage = (
                 <label className="text-slate-700 font-bold block">Alamat Email Resmi Kampus</label>
                 <input
                   type="email"
-                  value={content?.email || 'info@amcbekasi.ac.id'}
-                  onChange={e => onUpdateContent({ ...content!, email: e.target.value })}
+                  value={content?.contact?.email || 'info@amcbekasi.ac.id'}
+                  onChange={e => onUpdateContent({ ...content!, contact: { ...content!.contact!, email: e.target.value } })}
                   className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono"
                 />
               </div>
@@ -3271,8 +3510,8 @@ const processAlumniImage = (
                 <label className="text-slate-700 font-bold block">Alamat Fisik / Sekretariat Kampus (Sesuai Footer)</label>
                 <textarea
                   rows={3}
-                  value={content?.address || 'Jl. Raya Teuku Umar No. 12, Bekasi, Jawa Barat, Indonesia'}
-                  onChange={e => onUpdateContent({ ...content!, address: e.target.value })}
+                  value={content?.contact?.address || 'Jl. Raya Teuku Umar No. 12, Bekasi, Jawa Barat, Indonesia'}
+                  onChange={e => onUpdateContent({ ...content!, contact: { ...content!.contact!, address: e.target.value } })}
                   className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs leading-relaxed"
                 />
               </div>
@@ -3281,8 +3520,8 @@ const processAlumniImage = (
                 <label className="text-slate-700 font-bold block">Link Google Maps Iframe URL</label>
                 <input
                   type="text"
-                  value={content?.mapsEmbed || ''}
-                  onChange={e => onUpdateContent({ ...content!, mapsEmbed: e.target.value })}
+                  value={content?.contact?.googleMapsEmbed || ''}
+                  onChange={e => onUpdateContent({ ...content!, contact: { ...content!.contact!, googleMapsEmbed: e.target.value } })}
                   className="w-full bg-white border border-slate-200 p-2.5 rounded-lg text-xs font-mono mb-2"
                 />
                 <span className="text-[10px] text-slate-400 block">Masukkan link embed (src dari iframe maps) untuk memperbarui tampilan penunjuk arah di halaman kontak.</span>
@@ -3336,8 +3575,12 @@ const processAlumniImage = (
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  alert('Konfigurasi Umum & Identitas Website berhasil diperbarui!');
+                  onUpdateSEO(seoForm);
+                  if (content) {
+                    onUpdateContent({ ...content });
+                  }
                   addLog('Update Konfigurasi Umum', 'Memperbarui nama website, metadata seo global, sitemap, dan robots.txt');
+                  showToast('Konfigurasi Umum & Identitas Website berhasil diperbarui!', 'success');
                 }}
                 className="space-y-4 animate-fade-in"
               >
@@ -3346,7 +3589,8 @@ const processAlumniImage = (
                     <label className="text-slate-700 font-bold block">Nama Website</label>
                     <input
                       type="text"
-                      defaultValue="Akademi Maritim Cirebon Bekasi (AMC Bekasi)"
+                      value={content?.siteName || "Akademi Maritim Cirebon Bekasi (AMC Bekasi)"}
+                      onChange={e => onUpdateContent({ ...content!, siteName: e.target.value })}
                       className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-bold"
                     />
                   </div>
@@ -3354,7 +3598,8 @@ const processAlumniImage = (
                     <label className="text-slate-700 font-bold block">Meta Title Global</label>
                     <input
                       type="text"
-                      defaultValue="AMC Bekasi - Kampus Pelayaran Niaga Terbaik & Terakreditasi"
+                      value={seoForm.metaTitle || ''}
+                      onChange={e => setSeoForm({ ...seoForm, metaTitle: e.target.value })}
                       className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs"
                     />
                   </div>
@@ -3364,7 +3609,8 @@ const processAlumniImage = (
                   <label className="text-slate-700 font-bold block">Meta Description Global</label>
                   <textarea
                     rows={2}
-                    defaultValue="Akademi Maritim Cirebon Bekasi (AMC Bekasi) merupakan sekolah tinggi pelayaran niaga swasta terbaik dan terakreditasi yang melahirkan perwira pelayaran handal di Indonesia."
+                    value={seoForm.metaDescription || ''}
+                    onChange={e => setSeoForm({ ...seoForm, metaDescription: e.target.value })}
                     className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-medium"
                   />
                 </div>
@@ -3375,7 +3621,8 @@ const processAlumniImage = (
                     <input
                       type="text"
                       placeholder="G-XXXXXXXXXX"
-                      defaultValue="G-Y2H7K0W8EX"
+                      value={seoForm.analyticsId || 'G-Y2H7K0W8EX'}
+                      onChange={e => setSeoForm({ ...seoForm, analyticsId: e.target.value })}
                       className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono"
                     />
                   </div>
@@ -3384,7 +3631,8 @@ const processAlumniImage = (
                     <input
                       type="text"
                       placeholder="google-site-verification=..."
-                      defaultValue="google-site-verification=abc123xyz_verification_amc"
+                      value={seoForm.searchConsoleKey || 'google-site-verification=abc123xyz_verification_amc'}
+                      onChange={e => setSeoForm({ ...seoForm, searchConsoleKey: e.target.value })}
                       className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono"
                     />
                   </div>
@@ -3395,7 +3643,8 @@ const processAlumniImage = (
                     <label className="text-slate-700 font-bold block">Open Graph Title</label>
                     <input
                       type="text"
-                      defaultValue="AMC Bekasi - Pendidikan Pelayaran Profesional"
+                      value={seoForm.ogTitle || 'AMC Bekasi - Pendidikan Pelayaran Profesional'}
+                      onChange={e => setSeoForm({ ...seoForm, ogTitle: e.target.value })}
                       className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-medium"
                     />
                   </div>
@@ -3403,7 +3652,8 @@ const processAlumniImage = (
                     <label className="text-slate-700 font-bold block">Open Graph Image (Public URL)</label>
                     <input
                       type="text"
-                      defaultValue="https://amcbekasi.ac.id/og-image.jpg"
+                      value={seoForm.openGraph || ''}
+                      onChange={e => setSeoForm({ ...seoForm, openGraph: e.target.value })}
                       className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono"
                     />
                   </div>
@@ -3414,16 +3664,17 @@ const processAlumniImage = (
                     <label className="text-slate-700 font-bold block">XML Sitemap Path</label>
                     <input
                       type="text"
-                      defaultValue="/sitemap.xml"
-                      disabled
-                      className="w-full bg-slate-100 border border-slate-200 p-2.5 rounded-lg text-xs font-mono text-slate-500 cursor-not-allowed"
+                      value={seoForm.sitemap || '/sitemap.xml'}
+                      onChange={e => setSeoForm({ ...seoForm, sitemap: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono"
                     />
                   </div>
                   <div className="space-y-1">
                     <label className="text-slate-700 font-bold block">Robots.txt Configuration</label>
                     <textarea
                       rows={3}
-                      defaultValue={`User-agent: *\nAllow: /\nSitemap: https://amcbekasi.ac.id/sitemap.xml`}
+                      value={seoForm.robots || `User-agent: *\nAllow: /\nSitemap: https://amcbekasi.ac.id/sitemap.xml`}
+                      onChange={e => setSeoForm({ ...seoForm, robots: e.target.value })}
                       className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono"
                     />
                   </div>
@@ -3433,7 +3684,8 @@ const processAlumniImage = (
                   <label className="text-slate-700 font-bold block">Copyright Footer Text</label>
                   <input
                     type="text"
-                    defaultValue="© 2026 Akademi Maritim Cirebon Bekasi. All Rights Reserved."
+                    value={content?.copyright || "© 2026 Akademi Maritim Cirebon Bekasi. All Rights Reserved."}
+                    onChange={e => onUpdateContent({ ...content!, copyright: e.target.value })}
                     className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-medium"
                   />
                 </div>
@@ -3454,8 +3706,11 @@ const processAlumniImage = (
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  alert('Tautan Sosial Media berhasil disinkronisasikan!');
+                  if (content) {
+                    onUpdateContent({ ...content });
+                  }
                   addLog('Update Sosial Media', 'Memperbarui link Facebook, Instagram, YouTube, dan Twitter Resmi Kampus.');
+                  showToast('Tautan Sosial Media berhasil disinkronisasikan!', 'success');
                 }}
                 className="space-y-4 animate-fade-in"
               >
@@ -3464,7 +3719,11 @@ const processAlumniImage = (
                     <label className="text-slate-700 font-bold block">Instagram Link</label>
                     <input
                       type="text"
-                      defaultValue="https://instagram.com/amcbekasi"
+                      value={content?.socialMedia?.instagram || ''}
+                      onChange={e => onUpdateContent({
+                        ...content!,
+                        socialMedia: { ...content!.socialMedia!, instagram: e.target.value }
+                      })}
                       className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono"
                     />
                   </div>
@@ -3472,7 +3731,11 @@ const processAlumniImage = (
                     <label className="text-slate-700 font-bold block">Facebook Page Link</label>
                     <input
                       type="text"
-                      defaultValue="https://facebook.com/amcbekasiofficial"
+                      value={content?.socialMedia?.facebook || ''}
+                      onChange={e => onUpdateContent({
+                        ...content!,
+                        socialMedia: { ...content!.socialMedia!, facebook: e.target.value }
+                      })}
                       className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono"
                     />
                   </div>
@@ -3483,15 +3746,23 @@ const processAlumniImage = (
                     <label className="text-slate-700 font-bold block">YouTube Channel Link</label>
                     <input
                       type="text"
-                      defaultValue="https://youtube.com/c/amcbekasitv"
+                      value={content?.socialMedia?.youtube || ''}
+                      onChange={e => onUpdateContent({
+                        ...content!,
+                        socialMedia: { ...content!.socialMedia!, youtube: e.target.value }
+                      })}
                       className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-slate-700 font-bold block">Twitter / X Link</label>
+                    <label className="text-slate-700 font-bold block">TikTok Link</label>
                     <input
                       type="text"
-                      defaultValue="https://twitter.com/amcbekasi"
+                      value={content?.socialMedia?.tiktok || ''}
+                      onChange={e => onUpdateContent({
+                        ...content!,
+                        socialMedia: { ...content!.socialMedia!, tiktok: e.target.value }
+                      })}
                       className="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-mono"
                     />
                   </div>
@@ -3515,7 +3786,7 @@ const processAlumniImage = (
                   <div className="bg-slate-50 p-4 rounded-xl border space-y-3">
                     <span className="font-bold text-slate-800 text-xs block">Logo Utama Website (Header & Footer)</span>
                     <div className="w-24 h-24 rounded-lg bg-navy-950 p-2 border flex items-center justify-center">
-                      <img src="/logo.png" alt="AMC Logo" className="max-w-full max-h-full object-contain" onError={(e) => {
+                      <img src={images.find(img => img.id === 'campus_logo')?.url || "/logo.png"} alt="AMC Logo" className="max-w-full max-h-full object-contain" onError={(e) => {
                         (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=200";
                       }} />
                     </div>
@@ -3523,6 +3794,26 @@ const processAlumniImage = (
                       <input
                         type="file"
                         accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            try {
+                              const url = await uploadFileAndGetUrl(file);
+                              const updatedImages = images.map(img => 
+                                img.id === 'campus_logo' ? { ...img, url } : img
+                              );
+                              if (!images.some(img => img.id === 'campus_logo')) {
+                                updatedImages.push({ id: 'campus_logo', section: 'branding', label: 'Campus Logo', url });
+                              }
+                              onUpdateImages(updatedImages);
+                              addLog('Update Logo', 'Mengunggah logo utama website baru.');
+                              showToast('Logo utama website berhasil diperbarui!', 'success');
+                            } catch (err) {
+                              console.error('Gagal upload logo:', err);
+                              showToast('Gagal mengunggah logo.', 'error');
+                            }
+                          }
+                        }}
                         className="block w-full text-xs text-slate-500 file:mr-4 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-navy-900 file:text-white hover:file:bg-navy-950 cursor-pointer"
                       />
                       <span className="text-[10px] text-slate-400 block">Disarankan berformat PNG transparan.</span>
@@ -3532,7 +3823,7 @@ const processAlumniImage = (
                   <div className="bg-slate-50 p-4 rounded-xl border space-y-3">
                     <span className="font-bold text-slate-800 text-xs block">Favicon Website (Ikon Tab Browser)</span>
                     <div className="w-12 h-12 rounded bg-white p-2 border flex items-center justify-center shadow-sm">
-                      <img src="/favicon.ico" alt="Favicon" className="w-8 h-8 object-contain" onError={(e) => {
+                      <img src={seoForm.favicon || "/favicon.ico"} alt="Favicon" className="w-8 h-8 object-contain" onError={(e) => {
                         (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=100";
                       }} />
                     </div>
@@ -3540,6 +3831,20 @@ const processAlumniImage = (
                       <input
                         type="file"
                         accept=".ico,image/png"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            try {
+                              const url = await uploadFileAndGetUrl(file);
+                              onUpdateSEO({ ...seoForm, favicon: url });
+                              addLog('Update Favicon', 'Mengunggah favicon website baru.');
+                              showToast('Favicon website berhasil diperbarui!', 'success');
+                            } catch (err) {
+                              console.error('Gagal upload favicon:', err);
+                              showToast('Gagal mengunggah favicon.', 'error');
+                            }
+                          }
+                        }}
                         className="block w-full text-xs text-slate-500 file:mr-4 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-navy-900 file:text-white hover:file:bg-navy-950 cursor-pointer"
                       />
                       <span className="text-[10px] text-slate-400 block">Disarankan format ICO atau PNG 32x32.</span>
@@ -3550,7 +3855,7 @@ const processAlumniImage = (
                 <div className="flex justify-end pt-2 border-t">
                   <button
                     onClick={() => {
-                      alert('Logo & Favicon berhasil diunggah!');
+                      showToast('Konfigurasi Branding & Logo Berhasil Diterapkan!', 'success');
                       addLog('Update Logo & Favicon', 'Mengunggah logo utama website baru.');
                     }}
                     className="inline-flex items-center space-x-2 bg-navy-800 hover:bg-navy-900 text-white font-bold py-2.5 px-6 rounded-xl shadow cursor-pointer transition"

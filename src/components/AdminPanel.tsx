@@ -72,6 +72,7 @@ interface AdminPanelProps {
   onUpdateStoreOrders?: (items: StoreOrder[]) => void;
   sections?: PageSectionConfig[];
   onUpdateSections?: (sections: PageSectionConfig[]) => void;
+  onSaveAllToServer?: () => Promise<boolean>;
 }
 
 // Helper function to compress and resize images client-side before saving to state/localStorage with high fidelity
@@ -208,7 +209,8 @@ export default function AdminPanel({
   storeOrders = [],
   onUpdateStoreOrders = () => {},
   sections = [],
-  onUpdateSections = () => {}
+  onUpdateSections = () => {},
+  onSaveAllToServer
 }: AdminPanelProps) {
   
   // Custom dialog confirmation & Toast state
@@ -401,39 +403,45 @@ export default function AdminPanel({
     setMigrationError(null);
     setMigrationSuccess(null);
     try {
-      const backupData = {
-        updatedAt: Date.now(),
-        images,
-        content,
-        newsItems,
-        facilities,
-        galleryItems,
-        applications,
-        alumniItems,
-        seoSettings,
-        users,
-        mediaItems,
-        timelineEvents,
-        lecturers,
-        calendarEvents,
-        programs,
-        pmbConfig,
-        banners,
-        popupPromo,
-        runningTexts,
-        announcements,
-        storeProducts,
-        storeOrders,
-        sections
-      };
-      const response = await fetch('/api/save-backup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(backupData)
-      });
-      if (response.ok) {
+      let success = false;
+      if (onSaveAllToServer) {
+        success = await onSaveAllToServer();
+      } else {
+        const backupData = {
+          updatedAt: Date.now(),
+          images,
+          content,
+          newsItems,
+          facilities,
+          galleryItems,
+          applications,
+          alumniItems,
+          seoSettings,
+          users,
+          mediaItems,
+          timelineEvents,
+          lecturers,
+          calendarEvents,
+          programs,
+          pmbConfig,
+          banners,
+          popupPromo,
+          runningTexts,
+          announcements,
+          storeProducts,
+          storeOrders,
+          sections
+        };
+        const response = await fetch('/api/save-backup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(backupData)
+        });
+        success = response.ok;
+      }
+      if (success) {
         setMigrationSuccess('Perubahan berhasil disimpan secara permanen ke dalam file proyek "public/amc_backup.json"! Anda kini bebas mendeploy langsung ke Vercel tanpa khawatir data/foto hilang.');
       } else {
         throw new Error('Server mengembalikan status error saat menyimpan data.');

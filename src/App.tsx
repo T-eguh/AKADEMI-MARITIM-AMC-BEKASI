@@ -397,6 +397,38 @@ export default function App() {
   useEffect(() => {
     try {
       localStorage.setItem('amc_seo', JSON.stringify(seoSettings));
+      
+      if (seoSettings) {
+        if (seoSettings.metaTitle) {
+          document.title = seoSettings.metaTitle;
+        }
+        
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (!metaDesc) {
+          metaDesc = document.createElement('meta');
+          metaDesc.setAttribute('name', 'description');
+          document.head.appendChild(metaDesc);
+        }
+        metaDesc.setAttribute('content', seoSettings.metaDescription || '');
+
+        let metaKeywords = document.querySelector('meta[name="keywords"]');
+        if (!metaKeywords) {
+          metaKeywords = document.createElement('meta');
+          metaKeywords.setAttribute('name', 'keywords');
+          document.head.appendChild(metaKeywords);
+        }
+        metaKeywords.setAttribute('content', seoSettings.keywords || '');
+
+        if (seoSettings.favicon) {
+          let linkIcon: HTMLLinkElement | null = document.querySelector('link[rel*="icon"]');
+          if (!linkIcon) {
+            linkIcon = document.createElement('link');
+            linkIcon.rel = 'shortcut icon';
+            document.head.appendChild(linkIcon);
+          }
+          linkIcon.href = seoSettings.favicon;
+        }
+      }
     } catch (e) {
       console.warn('Gagal menyimpan SEO ke local storage:', e);
     }
@@ -530,73 +562,50 @@ export default function App() {
     }
   }, [sections]);
 
-  // Automatic server-side backup saving to ensure all edits are stored on the server
-  useEffect(() => {
-    const handler = setTimeout(async () => {
-      try {
-        const payload = {
-          updatedAt: Date.now(),
-          images,
-          content,
-          newsItems,
-          facilities,
-          galleryItems,
-          applications,
-          alumniItems,
-          seoSettings,
-          users,
-          timelineEvents,
-          lecturers,
-          calendarEvents,
-          programs,
-          pmbConfig,
-          banners,
-          popupPromo,
-          runningTexts,
-          announcements,
-          storeProducts,
-          storeOrders,
-          sections
-        };
-        const response = await fetch('/api/save-backup', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        });
-        if (response.ok) {
-          console.log('AMC Bekasi: Saved state to public/amc_backup.json automatically on server');
-        }
-      } catch (err) {
-        // Silent catch for production/Vercel builds where /api/save-backup does not exist
+  // Manual server-side backup saving to ensure all edits are stored on the server upon explicit save action
+  const handleSaveAllToServer = async () => {
+    try {
+      const payload = {
+        updatedAt: Date.now(),
+        images,
+        content,
+        newsItems,
+        facilities,
+        galleryItems,
+        applications,
+        alumniItems,
+        seoSettings,
+        users,
+        timelineEvents,
+        lecturers,
+        calendarEvents,
+        programs,
+        pmbConfig,
+        banners,
+        popupPromo,
+        runningTexts,
+        announcements,
+        storeProducts,
+        storeOrders,
+        sections
+      };
+      const response = await fetch('/api/save-backup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      if (response.ok) {
+        console.log('AMC Bekasi: Saved state to public/amc_backup.json explicitly by Administrator');
+        localStorage.removeItem('amc_has_local_edits');
+        return true;
       }
-    }, 2000);
-
-    return () => clearTimeout(handler);
-  }, [
-    images,
-    content,
-    newsItems,
-    facilities,
-    galleryItems,
-    applications,
-    alumniItems,
-    seoSettings,
-    users,
-    timelineEvents,
-    lecturers,
-    calendarEvents,
-    programs,
-    pmbConfig,
-    banners,
-    popupPromo,
-    runningTexts,
-    announcements,
-    storeProducts,
-    storeOrders,
-    sections
-  ]);
+    } catch (err) {
+      console.error('Failed to save state to server:', err);
+    }
+    return false;
+  };
 
   // Set local storage edit markers when admin performs modifications
   useEffect(() => {
@@ -1114,6 +1123,7 @@ export default function App() {
         images={images}
         socialMedia={translatedContent.socialMedia}
         campusProfile={translatedContent.campusProfile}
+        copyright={content?.copyright}
       />
 
       {/* Interactive Admin Portal Panel (Overlay Control Room) */}
@@ -1148,6 +1158,7 @@ export default function App() {
         isLoggedIn={isAdminLoggedIn}
         onLoginStatusChange={setIsAdminLoggedIn}
         onResetToDefaults={handleResetToDefaults}
+        onSaveAllToServer={handleSaveAllToServer}
         timelineEvents={timelineEvents}
         onUpdateTimelineEvents={setTimelineEvents}
         lecturers={lecturers}

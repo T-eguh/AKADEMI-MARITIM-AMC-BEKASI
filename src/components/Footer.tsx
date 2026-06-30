@@ -40,6 +40,7 @@ interface FooterProps {
     izinHubla: string;
     izinKemendikbud: string;
   };
+  copyright?: string;
 }
 
 export default function Footer({ 
@@ -48,7 +49,8 @@ export default function Footer({
   isAdminLoggedIn, 
   images = [],
   socialMedia,
-  campusProfile
+  campusProfile,
+  copyright
 }: FooterProps) {
   const currentYear = new Date().getFullYear();
   const logoImg = images.find((img) => img.id === 'campus_logo')?.url;
@@ -203,7 +205,7 @@ export default function Footer({
 
         {/* Lower Footer section */}
         <div className="flex flex-col sm:flex-row items-center justify-between pt-8 text-xs text-gray-500 gap-4">
-          <p>© {currentYear} Akademi Maritim (AMC BEKASI). All rights reserved.</p>
+          <p>{copyright || `© ${currentYear} Akademi Maritim (AMC BEKASI). All rights reserved.`}</p>
           
           <div className="flex items-center space-x-6">
             <span className="text-[10px] tracking-wide text-gray-600">Standardized & Built in 2026</span>

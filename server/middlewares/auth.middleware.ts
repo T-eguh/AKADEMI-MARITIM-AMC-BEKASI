@@ -7,7 +7,7 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     username: string;
-    role: 'Super Admin' | 'Admin' | 'Editor';
+    role: 'Super Admin' | 'Admin' | 'Editor' | 'News Admin' | 'PMB Admin' | 'Operator PMB' | 'Operator Store';
     email: string;
   };
 }
@@ -30,7 +30,7 @@ export function authenticateJWT(req: AuthenticatedRequest, res: Response, next: 
   }
 }
 
-export function authorizeRoles(roles: Array<'Super Admin' | 'Admin' | 'Editor'>) {
+export function authorizeRoles(roles: string[]) {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ message: 'Unauthorized' });

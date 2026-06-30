@@ -20,17 +20,17 @@ router.post('/save-backup', CMSController.saveBackupDirect);
 router.get('/cms/:collection', CMSController.getCollection);
 router.get('/cms/:collection/:id', CMSController.getCollection); // handled within standard search
 
-// Protected CMS creation & modifications (Admin / Super Admin / Editor only)
+// Protected CMS creation & modifications (Admin / Super Admin / Editor / operators)
 router.post(
   '/cms/:collection',
   authenticateJWT,
-  authorizeRoles(['Super Admin', 'Admin', 'Editor']),
+  authorizeRoles(['Super Admin', 'Admin', 'Editor', 'News Admin', 'PMB Admin', 'Operator PMB', 'Operator Store']),
   CMSController.createItem
 );
 router.put(
   '/cms/:collection/:id',
   authenticateJWT,
-  authorizeRoles(['Super Admin', 'Admin', 'Editor']),
+  authorizeRoles(['Super Admin', 'Admin', 'Editor', 'News Admin', 'PMB Admin', 'Operator PMB', 'Operator Store']),
   CMSController.updateItem
 );
 router.delete(
