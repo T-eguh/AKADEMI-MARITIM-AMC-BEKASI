@@ -49,6 +49,7 @@ import Testimonials from './components/Testimonials';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 import AdminPanel from './components/AdminPanel';
+import ApiService from './services/api';
 
 // New Custom Applet Features
 import PromoBanner from './components/PromoBanner';
@@ -76,62 +77,8 @@ export default function App() {
   // Persistent States loaded from LocalStorage
   // ----------------------------------------------------
   const [images, setImages] = useState<WebsiteImage[]>(() => {
-    const stored = localStorage.getItem('amc_images');
-    let loadedImages = DEFAULT_IMAGES;
-    if (stored) {
-      try {
-        loadedImages = JSON.parse(stored) as WebsiteImage[];
-      } catch (e) {
-        loadedImages = DEFAULT_IMAGES;
-      }
-    }
-    
-    // Ensure all default images from DEFAULT_IMAGES are present in loadedImages and have up-to-date high-res URLs
-    let finalImages = [...loadedImages];
-    let updated = false;
-
-    const OLD_LOWRES_URLS = [
-      'https://images.unsplash.com/photo-1516216628859-9bccecad13ec?q=80&w=1920&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1494412574643-ff11b0a5c1c3?q=80&w=1920&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1920&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=1000&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=500&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=500&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1531538606174-0f90ff5dce83?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=400',
-      'https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=400',
-      'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=400'
-    ];
-
-    DEFAULT_IMAGES.forEach((defaultImg) => {
-      const existingIdx = finalImages.findIndex(img => img.id === defaultImg.id);
-      if (existingIdx === -1) {
-        finalImages.push(defaultImg);
-        updated = true;
-      } else if (finalImages[existingIdx].url !== defaultImg.url) {
-        // ONLY overwrite if the current stored image url is in our old low-res list
-        // This ensures custom user-uploaded/edited images are never reverted!
-        const currentUrl = finalImages[existingIdx].url;
-        const isOldDefault = OLD_LOWRES_URLS.includes(currentUrl);
-        if (isOldDefault) {
-          finalImages[existingIdx].url = defaultImg.url;
-          updated = true;
-        }
-      }
-    });
-    
-    // Ensure 'campus_logo' exists
+    let finalImages = [...DEFAULT_IMAGES];
     const hasLogo = finalImages.some(img => img.id === 'campus_logo');
-    
     if (!hasLogo) {
       finalImages = [
         {
@@ -142,326 +89,40 @@ export default function App() {
         },
         ...finalImages
       ];
-      updated = true;
-    }
-    
-    if (updated) {
-      localStorage.setItem('amc_images', JSON.stringify(finalImages));
     }
     return finalImages;
   });
 
-  const [content, setContent] = useState<SiteContent>(() => {
-    const stored = localStorage.getItem('amc_content');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (parsed.hero && parsed.hero.subtitle && parsed.hero.subtitle.includes('Akademi Maritim AMC Bekasi')) {
-          parsed.hero.subtitle = parsed.hero.subtitle.replace('Akademi Maritim AMC Bekasi', 'Akademi Maritim (AMC BEKASI)');
-        }
-        if (parsed.about) {
-          if (parsed.about.history && parsed.about.history.includes('Akademi Maritim AMC Bekasi')) {
-            parsed.about.history = parsed.about.history.replaceAll('Akademi Maritim AMC Bekasi', 'Akademi Maritim (AMC BEKASI)');
-          }
-          if (parsed.about.welcomeMessage && parsed.about.welcomeMessage.includes('Akademi Maritim AMC Bekasi')) {
-            parsed.about.welcomeMessage = parsed.about.welcomeMessage.replaceAll('Akademi Maritim AMC Bekasi', 'Akademi Maritim (AMC BEKASI)');
-          }
-          if (parsed.about.directorTitle && parsed.about.directorTitle.includes('Akademi Maritim AMC Bekasi')) {
-            parsed.about.directorTitle = parsed.about.directorTitle.replaceAll('Akademi Maritim AMC Bekasi', 'Akademi Maritim (AMC BEKASI)');
-          }
-          if (!parsed.about.ownerName) {
-            parsed.about.ownerName = DEFAULT_CONTENT.about.ownerName;
-          }
-          if (!parsed.about.ownerTitle) {
-            parsed.about.ownerTitle = DEFAULT_CONTENT.about.ownerTitle;
-          }
-          if (!parsed.about.ownerMessage) {
-            parsed.about.ownerMessage = DEFAULT_CONTENT.about.ownerMessage;
-          }
-        }
-        return parsed;
-      } catch (e) {
-        return DEFAULT_CONTENT;
-      }
-    }
-    return DEFAULT_CONTENT;
-  });
-
-  const [newsItems, setNewsItems] = useState<NewsItem[]>(() => {
-    try {
-      const stored = localStorage.getItem('amc_news');
-      return stored ? JSON.parse(stored) : DEFAULT_NEWS;
-    } catch (e) {
-      console.error('Error parsing amc_news:', e);
-      return DEFAULT_NEWS;
-    }
-  });
-
-  const [facilities, setFacilities] = useState<FacilityItem[]>(() => {
-    try {
-      const stored = localStorage.getItem('amc_facilities');
-      return stored ? JSON.parse(stored) : DEFAULT_FACILITIES;
-    } catch (e) {
-      console.error('Error parsing amc_facilities:', e);
-      return DEFAULT_FACILITIES;
-    }
-  });
-
-  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(() => {
-    try {
-      const stored = localStorage.getItem('amc_gallery');
-      return stored ? JSON.parse(stored) : DEFAULT_GALLERY;
-    } catch (e) {
-      console.error('Error parsing amc_gallery:', e);
-      return DEFAULT_GALLERY;
-    }
-  });
-
-  const [applications, setApplications] = useState<PMBApplication[]>(() => {
-    try {
-      const stored = localStorage.getItem('amc_applications');
-      return stored ? JSON.parse(stored) : [];
-    } catch (e) {
-      console.error('Error parsing amc_applications:', e);
-      return [];
-    }
-  });
-
-  const [alumniItems, setAlumniItems] = useState<AlumniItem[]>(() => {
-    try {
-      const stored = localStorage.getItem('amc_alumni');
-      if (stored) {
-        const parsed = JSON.parse(stored) as AlumniItem[];
-        return parsed.map(item => {
-          const defaultItem = DEFAULT_ALUMNI.find(d => d.id === item.id);
-          if (defaultItem) {
-            return {
-              ...defaultItem,
-              ...item,
-              shipName: item.shipName || defaultItem.shipName,
-              placement: item.placement || defaultItem.placement
-            };
-          }
-          return item;
-        });
-      }
-      return DEFAULT_ALUMNI;
-    } catch (e) {
-      return DEFAULT_ALUMNI;
-    }
-  });
-
-  const [seoSettings, setSeoSettings] = useState<SEOSettings>(() => {
-    try {
-      const stored = localStorage.getItem('amc_seo');
-      return stored ? JSON.parse(stored) : DEFAULT_SEO;
-    } catch (e) {
-      return DEFAULT_SEO;
-    }
-  });
-
-  const [users, setUsers] = useState<UserItem[]>(() => {
-    try {
-      const stored = localStorage.getItem('amc_users');
-      return stored ? JSON.parse(stored) : DEFAULT_USERS;
-    } catch (e) {
-      return DEFAULT_USERS;
-    }
-  });
-
-  const [mediaItems, setMediaItems] = useState<MediaItem[]>(() => {
-    try {
-      const stored = localStorage.getItem('amc_media');
-      return stored ? JSON.parse(stored) : DEFAULT_MEDIA;
-    } catch (e) {
-      return DEFAULT_MEDIA;
-    }
-  });
-
-  const [activityLogs, setActivityLogs] = useState<ActivityLogItem[]>(() => {
-    try {
-      const stored = localStorage.getItem('amc_logs');
-      return stored ? JSON.parse(stored) : DEFAULT_LOGS;
-    } catch (e) {
-      return DEFAULT_LOGS;
-    }
-  });
-
-  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>(() => {
-    try {
-      const stored = localStorage.getItem('amc_timeline');
-      return stored ? JSON.parse(stored) : DEFAULT_TIMELINE;
-    } catch (e) {
-      return DEFAULT_TIMELINE;
-    }
-  });
-
-  const [lecturers, setLecturers] = useState<LecturerItem[]>(() => {
-    try {
-      const stored = localStorage.getItem('amc_lecturers');
-      return stored ? JSON.parse(stored) : DEFAULT_LECTURERS;
-    } catch (e) {
-      return DEFAULT_LECTURERS;
-    }
-  });
-
-  const [calendarEvents, setCalendarEvents] = useState<CalendarEventItem[]>(() => {
-    try {
-      const stored = localStorage.getItem('amc_calendar');
-      return stored ? JSON.parse(stored) : DEFAULT_CALENDAR;
-    } catch (e) {
-      return DEFAULT_CALENDAR;
-    }
-  });
-
+  const [content, setContent] = useState<SiteContent>(DEFAULT_CONTENT);
+  const [newsItems, setNewsItems] = useState<NewsItem[]>(DEFAULT_NEWS);
+  const [facilities, setFacilities] = useState<FacilityItem[]>(DEFAULT_FACILITIES);
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(DEFAULT_GALLERY);
+  const [applications, setApplications] = useState<PMBApplication[]>([]);
+  const [alumniItems, setAlumniItems] = useState<AlumniItem[]>(DEFAULT_ALUMNI);
+  const [seoSettings, setSeoSettings] = useState<SEOSettings>(DEFAULT_SEO);
+  const [users, setUsers] = useState<UserItem[]>(DEFAULT_USERS);
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>(DEFAULT_MEDIA);
+  const [activityLogs, setActivityLogs] = useState<ActivityLogItem[]>(DEFAULT_LOGS);
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>(DEFAULT_TIMELINE);
+  const [lecturers, setLecturers] = useState<LecturerItem[]>(DEFAULT_LECTURERS);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEventItem[]>(DEFAULT_CALENDAR);
   const [programs, setPrograms] = useState<ProgramItem[]>(() => {
-    try {
-      const stored = localStorage.getItem('amc_programs');
-      let loaded = stored ? JSON.parse(stored) as ProgramItem[] : DEFAULT_PROGRAMS;
-      let updated = false;
-      let finalProgs = loaded.map(item => {
-        if (item.id === 'kpnk') {
-          item = { ...item, id: 'kpn' };
-          updated = true;
-        }
-
-        if (item.id === 'kpn') {
-          let itemUpdated = false;
-          let title = item.title;
-          let abbreviation = item.abbreviation;
-          let fullDetails = item.fullDetails;
-          
-          if (title && title.includes('KPNK')) {
-            title = title.replace(/KPNK/g, 'KPN');
-            itemUpdated = true;
-          }
-          if (abbreviation && abbreviation.includes('KPNK')) {
-            abbreviation = abbreviation.replace(/KPNK/g, 'KPN');
-            itemUpdated = true;
-          }
-          if (fullDetails && fullDetails.includes('KPNK')) {
-            fullDetails = fullDetails.replace(/KPNK/g, 'KPN');
-            itemUpdated = true;
-          }
-          if (itemUpdated) {
-            updated = true;
-            item = { ...item, title, abbreviation, fullDetails };
-          }
-        }
-
-        const defaultItem = DEFAULT_PROGRAMS.find(d => d.id === item.id);
-        if (defaultItem && item.imageUrl !== defaultItem.imageUrl) {
-          // Only overwrite if the current imageUrl is one of the old low-res beach defaults.
-          // If the user has custom-uploaded/changed it, let's keep their change!
-          const oldProgsUrls = [
-            'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=800&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=800&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=400',
-            'https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=400',
-            'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=400'
-          ];
-          const isOldDefault = oldProgsUrls.includes(item.imageUrl);
-          if (isOldDefault) {
-            updated = true;
-            return { ...item, imageUrl: defaultItem.imageUrl };
-          }
-        }
-        return item;
-      });
-      if (updated) {
-        localStorage.setItem('amc_programs', JSON.stringify(finalProgs));
+    let finalProgs = [...DEFAULT_PROGRAMS];
+    return finalProgs.map(item => {
+      if (item.id === 'kpnk') {
+        return { ...item, id: 'kpn' };
       }
-      return finalProgs;
-    } catch (e) {
-      return DEFAULT_PROGRAMS;
-    }
+      return item;
+    });
   });
-
-  const [pmbConfig, setPmbConfig] = useState<PMBConfig>(() => {
-    try {
-      const stored = localStorage.getItem('amc_pmb_config');
-      return stored ? JSON.parse(stored) : DEFAULT_PMB_CONFIG;
-    } catch (e) {
-      return DEFAULT_PMB_CONFIG;
-    }
-  });
-
-  // ----------------------------------------------------
-  // New State Declarations for Promotional & E-commerce features
-  // ----------------------------------------------------
-  const [banners, setBanners] = useState<BannerPromoItem[]>(() => {
-    try {
-      const stored = localStorage.getItem('amc_banners');
-      return stored ? JSON.parse(stored) : DEFAULT_BANNERS;
-    } catch (e) {
-      console.error('Error parsing amc_banners:', e);
-      return DEFAULT_BANNERS;
-    }
-  });
-
-  const [popupPromo, setPopupPromo] = useState<PopupPromoConfig>(() => {
-    try {
-      const stored = localStorage.getItem('amc_popup_promo');
-      return stored ? JSON.parse(stored) : DEFAULT_POPUP;
-    } catch (e) {
-      console.error('Error parsing amc_popup_promo:', e);
-      return DEFAULT_POPUP;
-    }
-  });
-
-  const [runningTexts, setRunningTexts] = useState<RunningTextConfig[]>(() => {
-    try {
-      const stored = localStorage.getItem('amc_running_texts');
-      return stored ? JSON.parse(stored) : DEFAULT_RUNNING_TEXTS;
-    } catch (e) {
-      console.error('Error parsing amc_running_texts:', e);
-      return DEFAULT_RUNNING_TEXTS;
-    }
-  });
-
-  const [announcements, setAnnouncements] = useState<AnnouncementItem[]>(() => {
-    try {
-      const stored = localStorage.getItem('amc_announcements');
-      return stored ? JSON.parse(stored) : DEFAULT_ANNOUNCEMENTS;
-    } catch (e) {
-      console.error('Error parsing amc_announcements:', e);
-      return DEFAULT_ANNOUNCEMENTS;
-    }
-  });
-
-  const [storeProducts, setStoreProducts] = useState<StoreProduct[]>(() => {
-    try {
-      const stored = localStorage.getItem('amc_store_products');
-      return stored ? JSON.parse(stored) : DEFAULT_PRODUCTS;
-    } catch (e) {
-      console.error('Error parsing amc_store_products:', e);
-      return DEFAULT_PRODUCTS;
-    }
-  });
-
-  const [storeOrders, setStoreOrders] = useState<StoreOrder[]>(() => {
-    try {
-      const stored = localStorage.getItem('amc_store_orders');
-      return stored ? JSON.parse(stored) : [];
-    } catch (e) {
-      console.error('Error parsing amc_store_orders:', e);
-      return [];
-    }
-  });
-
-  const [sections, setSections] = useState<PageSectionConfig[]>(() => {
-    try {
-      const stored = localStorage.getItem('amc_sections');
-      if (stored) {
-        return JSON.parse(stored);
-      }
-      return DEFAULT_SECTIONS;
-    } catch (e) {
-      console.error('Error parsing amc_sections:', e);
-      return DEFAULT_SECTIONS;
-    }
-  });
+  const [pmbConfig, setPmbConfig] = useState<PMBConfig>(DEFAULT_PMB_CONFIG);
+  const [banners, setBanners] = useState<BannerPromoItem[]>(DEFAULT_BANNERS);
+  const [popupPromo, setPopupPromo] = useState<PopupPromoConfig>(DEFAULT_POPUP);
+  const [runningTexts, setRunningTexts] = useState<RunningTextConfig[]>(DEFAULT_RUNNING_TEXTS);
+  const [announcements, setAnnouncements] = useState<AnnouncementItem[]>(DEFAULT_ANNOUNCEMENTS);
+  const [storeProducts, setStoreProducts] = useState<StoreProduct[]>(DEFAULT_PRODUCTS);
+  const [storeOrders, setStoreOrders] = useState<StoreOrder[]>([]);
+  const [sections, setSections] = useState<PageSectionConfig[]>(DEFAULT_SECTIONS);
 
 
   // ----------------------------------------------------
@@ -470,117 +131,105 @@ export default function App() {
   useEffect(() => {
     const loadConfig = async () => {
       try {
+        // Fetch the dynamic server-side updated configuration directly
+        let parsed: any = null;
         const res = await fetch(`/amc_backup.json?t=${Date.now()}`);
         if (res.ok) {
-          const parsed = await res.json();
-          if (parsed && typeof parsed === 'object') {
-            const hasLocalEdits = localStorage.getItem('amc_has_local_edits') === 'true';
-            const localTimestamp = Number(localStorage.getItem('amc_local_edits_timestamp') || '0');
-            const serverTimestamp = Number(parsed.updatedAt || '0');
-            
-            // We load the server backup if:
-            // 1. The user has never made local edits on this browser
-            // 2. OR the deployed backup file has a newer timestamp than local edits
-            // 3. OR the backup has never been loaded once before
-            const isBackupLoaded = localStorage.getItem('amc_backup_loaded') === 'true';
-            const isAdmin = localStorage.getItem('amc_admin_logged') === 'true';
-            const shouldLoadBackup = !isAdmin || !isBackupLoaded || !hasLocalEdits || (serverTimestamp > localTimestamp);
+          parsed = await res.json();
+        }
 
-            if (shouldLoadBackup) {
-              console.log('AMC Bekasi: Loading configuration from amc_backup.json...');
-              if (parsed.images && Array.isArray(parsed.images)) {
-                setImages(parsed.images);
-                localStorage.setItem('amc_images', JSON.stringify(parsed.images));
-              }
-              if (parsed.content && typeof parsed.content === 'object') {
-                setContent(parsed.content);
-                localStorage.setItem('amc_content', JSON.stringify(parsed.content));
-              }
-              if (parsed.newsItems && Array.isArray(parsed.newsItems)) {
-                setNewsItems(parsed.newsItems);
-                localStorage.setItem('amc_news', JSON.stringify(parsed.newsItems));
-              }
-              if (parsed.facilities && Array.isArray(parsed.facilities)) {
-                setFacilities(parsed.facilities);
-                localStorage.setItem('amc_facilities', JSON.stringify(parsed.facilities));
-              }
-              if (parsed.galleryItems && Array.isArray(parsed.galleryItems)) {
-                setGalleryItems(parsed.galleryItems);
-                localStorage.setItem('amc_gallery', JSON.stringify(parsed.galleryItems));
-              }
-              if (parsed.applications && Array.isArray(parsed.applications)) {
-                setApplications(parsed.applications);
-                localStorage.setItem('amc_applications', JSON.stringify(parsed.applications));
-              }
-              if (parsed.alumniItems && Array.isArray(parsed.alumniItems)) {
-                setAlumniItems(parsed.alumniItems);
-                localStorage.setItem('amc_alumni', JSON.stringify(parsed.alumniItems));
-              }
-              if (parsed.seoSettings && typeof parsed.seoSettings === 'object') {
-                setSeoSettings(parsed.seoSettings);
-                localStorage.setItem('amc_seo', JSON.stringify(parsed.seoSettings));
-              }
-              if (parsed.users && Array.isArray(parsed.users)) {
-                setUsers(parsed.users);
-                localStorage.setItem('amc_users', JSON.stringify(parsed.users));
-              }
-              if (parsed.timelineEvents && Array.isArray(parsed.timelineEvents)) {
-                setTimelineEvents(parsed.timelineEvents);
-                localStorage.setItem('amc_timeline', JSON.stringify(parsed.timelineEvents));
-              }
-              if (parsed.lecturers && Array.isArray(parsed.lecturers)) {
-                setLecturers(parsed.lecturers);
-                localStorage.setItem('amc_lecturers', JSON.stringify(parsed.lecturers));
-              }
-              if (parsed.calendarEvents && Array.isArray(parsed.calendarEvents)) {
-                setCalendarEvents(parsed.calendarEvents);
-                localStorage.setItem('amc_calendar', JSON.stringify(parsed.calendarEvents));
-              }
-              if (parsed.programs && Array.isArray(parsed.programs)) {
-                setPrograms(parsed.programs);
-                localStorage.setItem('amc_programs', JSON.stringify(parsed.programs));
-              }
-              if (parsed.pmbConfig && typeof parsed.pmbConfig === 'object') {
-                setPmbConfig(parsed.pmbConfig);
-                localStorage.setItem('amc_pmb_config', JSON.stringify(parsed.pmbConfig));
-              }
-              if (parsed.banners && Array.isArray(parsed.banners)) {
-                setBanners(parsed.banners);
-                localStorage.setItem('amc_banners', JSON.stringify(parsed.banners));
-              }
-              if (parsed.popupPromo && typeof parsed.popupPromo === 'object') {
-                setPopupPromo(parsed.popupPromo);
-                localStorage.setItem('amc_popup_promo', JSON.stringify(parsed.popupPromo));
-              }
-              if (parsed.runningTexts && Array.isArray(parsed.runningTexts)) {
-                setRunningTexts(parsed.runningTexts);
-                localStorage.setItem('amc_running_texts', JSON.stringify(parsed.runningTexts));
-              }
-              if (parsed.announcements && Array.isArray(parsed.announcements)) {
-                setAnnouncements(parsed.announcements);
-                localStorage.setItem('amc_announcements', JSON.stringify(parsed.announcements));
-              }
-              if (parsed.storeProducts && Array.isArray(parsed.storeProducts)) {
-                setStoreProducts(parsed.storeProducts);
-                localStorage.setItem('amc_store_products', JSON.stringify(parsed.storeProducts));
-              }
-              if (parsed.storeOrders && Array.isArray(parsed.storeOrders)) {
-                setStoreOrders(parsed.storeOrders);
-                localStorage.setItem('amc_store_orders', JSON.stringify(parsed.storeOrders));
-              }
-              if (parsed.sections && Array.isArray(parsed.sections)) {
-                setSections(parsed.sections);
-                localStorage.setItem('amc_sections', JSON.stringify(parsed.sections));
-              }
-              localStorage.setItem('amc_backup_loaded', 'true');
-              if (serverTimestamp > 0) {
-                localStorage.setItem('amc_local_edits_timestamp', String(serverTimestamp));
-              }
-            } else {
-              console.log('AMC Bekasi: Using newer local storage configuration.');
+        if (parsed && typeof parsed === 'object') {
+            console.log('AMC Bekasi: Loading configuration from amc_backup.json...');
+            if (parsed.images && Array.isArray(parsed.images)) {
+              setImages(parsed.images);
+              localStorage.setItem('amc_images', JSON.stringify(parsed.images));
+            }
+            if (parsed.content && typeof parsed.content === 'object') {
+              setContent(parsed.content);
+              localStorage.setItem('amc_content', JSON.stringify(parsed.content));
+            }
+            if (parsed.newsItems && Array.isArray(parsed.newsItems)) {
+              setNewsItems(parsed.newsItems);
+              localStorage.setItem('amc_news', JSON.stringify(parsed.newsItems));
+            }
+            if (parsed.facilities && Array.isArray(parsed.facilities)) {
+              setFacilities(parsed.facilities);
+              localStorage.setItem('amc_facilities', JSON.stringify(parsed.facilities));
+            }
+            if (parsed.galleryItems && Array.isArray(parsed.galleryItems)) {
+              setGalleryItems(parsed.galleryItems);
+              localStorage.setItem('amc_gallery', JSON.stringify(parsed.galleryItems));
+            }
+            if (parsed.applications && Array.isArray(parsed.applications)) {
+              setApplications(parsed.applications);
+              localStorage.setItem('amc_applications', JSON.stringify(parsed.applications));
+            }
+            if (parsed.alumniItems && Array.isArray(parsed.alumniItems)) {
+              setAlumniItems(parsed.alumniItems);
+              localStorage.setItem('amc_alumni', JSON.stringify(parsed.alumniItems));
+            }
+            if (parsed.seoSettings && typeof parsed.seoSettings === 'object') {
+              setSeoSettings(parsed.seoSettings);
+              localStorage.setItem('amc_seo', JSON.stringify(parsed.seoSettings));
+            }
+            if (parsed.users && Array.isArray(parsed.users)) {
+              setUsers(parsed.users);
+              localStorage.setItem('amc_users', JSON.stringify(parsed.users));
+            }
+            if (parsed.timelineEvents && Array.isArray(parsed.timelineEvents)) {
+              setTimelineEvents(parsed.timelineEvents);
+              localStorage.setItem('amc_timeline', JSON.stringify(parsed.timelineEvents));
+            }
+            if (parsed.lecturers && Array.isArray(parsed.lecturers)) {
+              setLecturers(parsed.lecturers);
+              localStorage.setItem('amc_lecturers', JSON.stringify(parsed.lecturers));
+            }
+            if (parsed.calendarEvents && Array.isArray(parsed.calendarEvents)) {
+              setCalendarEvents(parsed.calendarEvents);
+              localStorage.setItem('amc_calendar', JSON.stringify(parsed.calendarEvents));
+            }
+            if (parsed.programs && Array.isArray(parsed.programs)) {
+              setPrograms(parsed.programs);
+              localStorage.setItem('amc_programs', JSON.stringify(parsed.programs));
+            }
+            if (parsed.pmbConfig && typeof parsed.pmbConfig === 'object') {
+              setPmbConfig(parsed.pmbConfig);
+              localStorage.setItem('amc_pmb_config', JSON.stringify(parsed.pmbConfig));
+            }
+            if (parsed.banners && Array.isArray(parsed.banners)) {
+              setBanners(parsed.banners);
+              localStorage.setItem('amc_banners', JSON.stringify(parsed.banners));
+            }
+            if (parsed.popupPromo && typeof parsed.popupPromo === 'object') {
+              setPopupPromo(parsed.popupPromo);
+              localStorage.setItem('amc_popup_promo', JSON.stringify(parsed.popupPromo));
+            }
+            if (parsed.runningTexts && Array.isArray(parsed.runningTexts)) {
+              setRunningTexts(parsed.runningTexts);
+              localStorage.setItem('amc_running_texts', JSON.stringify(parsed.runningTexts));
+            }
+            if (parsed.announcements && Array.isArray(parsed.announcements)) {
+              setAnnouncements(parsed.announcements);
+              localStorage.setItem('amc_announcements', JSON.stringify(parsed.announcements));
+            }
+            if (parsed.storeProducts && Array.isArray(parsed.storeProducts)) {
+              setStoreProducts(parsed.storeProducts);
+              localStorage.setItem('amc_store_products', JSON.stringify(parsed.storeProducts));
+            }
+            if (parsed.storeOrders && Array.isArray(parsed.storeOrders)) {
+              setStoreOrders(parsed.storeOrders);
+              localStorage.setItem('amc_store_orders', JSON.stringify(parsed.storeOrders));
+            }
+            if (parsed.sections && Array.isArray(parsed.sections)) {
+              setSections(parsed.sections);
+              localStorage.setItem('amc_sections', JSON.stringify(parsed.sections));
+            }
+            localStorage.setItem('amc_backup_loaded', 'true');
+            const serverTimestamp = Number(parsed.updatedAt || '0');
+            if (serverTimestamp > 0) {
+              localStorage.setItem('amc_local_edits_timestamp', String(serverTimestamp));
             }
           }
-        }
       } catch (e) {
         console.log('AMC Bekasi: No amc_backup.json found or failed to parse, falling back to defaults.');
       } finally {
@@ -881,13 +530,8 @@ export default function App() {
     }
   }, [sections]);
 
-  // Automatic server-side backup saving for Vercel deployment preparation
+  // Automatic server-side backup saving to ensure all edits are stored on the server
   useEffect(() => {
-    // Only attempt in development environments
-    if (window.location.hostname !== 'localhost' && !window.location.hostname.includes('.run.app')) {
-      return;
-    }
-
     const handler = setTimeout(async () => {
       try {
         const payload = {

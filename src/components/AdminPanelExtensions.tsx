@@ -16,6 +16,32 @@ import {
   StoreProduct, StoreOrder, NewsItem, SiteContent, WebsiteImage, PageSectionConfig
 } from '../types';
 import { DEFAULT_SECTIONS } from '../data';
+import ApiService from '../services/api';
+
+// Unified full-stack file uploader with client-side fallback
+const uploadFileAndGetUrl = async (file: File): Promise<string> => {
+  try {
+    const uploadRes = await ApiService.uploadImage(file);
+    if (uploadRes && uploadRes.url) {
+      return uploadRes.url;
+    }
+  } catch (apiErr) {
+    console.warn('Backend upload failed, using high-fidelity local fallback.', apiErr);
+  }
+
+  return new Promise<string>((resolve) => {
+    compressImage(file)
+      .then(resolve)
+      .catch((err) => {
+        console.error('Gagal memproses gambar:', err);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          resolve(reader.result as string || '');
+        };
+        reader.readAsDataURL(file);
+      });
+  });
+};
 
 // Image compressor helper (resizes and compresses images to prevent exceeding localStorage quota limit of 5MB)
 const compressImage = (file: File, maxWidth = 1200, maxHeight = 1200, quality = 0.85): Promise<string> => {
@@ -241,10 +267,25 @@ export default function AdminPanelExtensions({
   // --- Global UX States ---
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
   
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
+  };
+
+  const requestConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setConfirmState({
+      isOpen: true,
+      title,
+      message,
+      onConfirm
+    });
   };
 
   // --- Search, Filter, Sort & Pagination States ---
@@ -422,25 +463,35 @@ const processAlumniImage = (
   };
 
   const handleDeleteAlumni = (id: string, name: string) => {
-    if (confirm(`Apakah Anda yakin ingin menghapus data alumni ${name}?`)) {
-      onUpdateAlumni(alumniItems.filter(item => item.id !== id));
-      addLog('Hapus Alumni', `Menghapus data alumni: ${name}`);
+    if (!id) {
+      showToast('ID Alumni tidak valid.', 'error');
+      return;
     }
+    requestConfirm('Hapus Data Alumni', `Apakah Anda yakin ingin menghapus data alumni ${name}?`, async () => {
+      try {
+        await ApiService.deleteItem('alumni', id);
+        onUpdateAlumni(alumniItems.filter(item => item.id !== id));
+        addLog('Hapus Alumni', `Menghapus data alumni: ${name}`);
+        showToast('Data alumni berhasil dihapus.', 'success');
+      } catch (err: any) {
+        console.error('Gagal menghapus alumni:', err);
+        showToast('Gagal menghapus data alumni dari server.', 'error');
+      }
+    });
   };
 
   const handleAlumniImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Use original resolution by using FileReader dataURL directly
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const resultStr = reader.result as string || '';
-        setRawUploadedImage(resultStr);
-        setAlumniForm(prev => ({ ...prev, photo: resultStr }));
+      try {
+        const url = await uploadFileAndGetUrl(file);
+        setRawUploadedImage(url);
+        setAlumniForm(prev => ({ ...prev, photo: url }));
         setPhotoZoom(1);
         setPhotoRotation(0);
-      };
-      reader.readAsDataURL(file);
+      } catch (err) {
+        console.error('Gagal mengupload foto alumni:', err);
+      }
     }
   };
 
@@ -500,13 +551,24 @@ const processAlumniImage = (
 
   const handleDeleteUser = (id: string, name: string) => {
     if (id === 'user_1') {
-      alert('Maaf, akun Super Admin utama tidak dapat dihapus untuk mencegah lock-out sistem.');
+      showToast('Maaf, akun Super Admin utama tidak dapat dihapus.', 'error');
       return;
     }
-    if (confirm(`Hapus hak akses untuk administrator ${name}?`)) {
-      onUpdateUsers(users.filter(u => u.id !== id));
-      addLog('Hapus User', `Mencabut akses administrator: ${name}`);
+    if (!id) {
+      showToast('ID Pengguna tidak valid.', 'error');
+      return;
     }
+    requestConfirm('Cabut Akses', `Apakah Anda yakin ingin menghapus hak akses untuk administrator ${name}?`, async () => {
+      try {
+        await ApiService.deleteItem('users', id);
+        onUpdateUsers(users.filter(u => u.id !== id));
+        addLog('Hapus User', `Mencabut akses administrator: ${name}`);
+        showToast('Hak akses administrator berhasil dicabut.', 'success');
+      } catch (err: any) {
+        console.error('Gagal menghapus user:', err);
+        showToast('Gagal menghapus administrator dari server.', 'error');
+      }
+    });
   };
 
   // 4. MEDIA STATES & HANDLERS
@@ -517,12 +579,12 @@ const processAlumniImage = (
       const newItems: MediaItem[] = [];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const compressed = await compressImage(file);
+        const url = await uploadFileAndGetUrl(file);
         newItems.push({
           id: `media_${Date.now()}_${i}`,
           name: file.name,
           type: 'image',
-          url: compressed,
+          url: url,
           folder: 'Root',
           size: `${Math.round(file.size / 1024)} KB`,
           uploadedAt: new Date().toISOString().split('T')[0]
@@ -536,23 +598,34 @@ const processAlumniImage = (
   };
 
   const handleDeleteMedia = (id: string, name: string) => {
-    if (confirm(`Apakah Anda yakin ingin menghapus berkas media "${name}"? Tindakan ini tidak dapat dibatalkan.`)) {
-      onUpdateMedia(mediaItems.filter(m => m.id !== id));
-      addLog('Hapus Media', `Menghapus berkas media: ${name}`);
+    if (!id) {
+      showToast('ID Media tidak valid.', 'error');
+      return;
     }
+    requestConfirm('Hapus Media', `Apakah Anda yakin ingin menghapus berkas media "${name}"? Tindakan ini tidak dapat dibatalkan.`, async () => {
+      try {
+        await ApiService.deleteItem('media', id);
+        onUpdateMedia(mediaItems.filter(m => m.id !== id));
+        addLog('Hapus Media', `Menghapus berkas media: ${name}`);
+        showToast('Berkas media berhasil dihapus.', 'success');
+      } catch (err: any) {
+        console.error('Gagal menghapus media:', err);
+        showToast('Gagal menghapus media dari server.', 'error');
+      }
+    });
   };
 
   const handleCopyLink = (url: string) => {
     navigator.clipboard.writeText(url);
-    alert('Link gambar berhasil disalin ke clipboard! Anda dapat menempelkannya di input form gambar manapun.');
+    showToast('Link gambar berhasil disalin ke clipboard!', 'success');
   };
 
   // 5. ACTIVITY LOGS HANDLERS
   const handleClearLogs = () => {
-    if (confirm('Apakah Anda yakin ingin mengosongkan seluruh log aktivitas audit? Tindakan ini hanya boleh dilakukan oleh Super Admin.')) {
+    requestConfirm('Kosongkan Audit Log', 'Apakah Anda yakin ingin mengosongkan seluruh log aktivitas audit? Tindakan ini hanya boleh dilakukan oleh Super Admin.', () => {
       onUpdateLogs([]);
-      alert('Seluruh log aktivitas audit berhasil dibersihkan.');
-    }
+      showToast('Seluruh log aktivitas audit berhasil dibersihkan.', 'success');
+    });
   };
 
   return (
@@ -1357,8 +1430,12 @@ const processAlumniImage = (
                         onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            const compressed = await compressImage(file);
-                            setUserForm(prev => ({ ...prev, avatar: compressed }));
+                            try {
+                              const url = await uploadFileAndGetUrl(file);
+                              setUserForm(prev => ({ ...prev, avatar: url }));
+                            } catch (err) {
+                              console.error('Gagal upload avatar:', err);
+                            }
                           }
                         }}
                         className="block w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-xl file:border-0 file:text-[10px] file:font-semibold file:bg-navy-900 file:text-white hover:file:bg-navy-950 cursor-pointer"
@@ -1855,8 +1932,12 @@ const processAlumniImage = (
                         onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            const compressed = await compressImage(file);
-                            setBannerForm(prev => ({ ...prev, image: compressed }));
+                            try {
+                              const url = await uploadFileAndGetUrl(file);
+                              setBannerForm(prev => ({ ...prev, image: url }));
+                            } catch (err) {
+                              console.error('Gagal mengupload banner:', err);
+                            }
                           }
                         }}
                         className="block w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-navy-900 file:text-white hover:file:bg-navy-950 cursor-pointer"
@@ -1991,10 +2072,21 @@ const processAlumniImage = (
                                   </button>
                                   <button
                                     onClick={() => {
-                                      if (confirm(`Hapus banner iklan "${banner.title}"?`)) {
-                                        onUpdateBanners(banners.filter(b => b.id !== banner.id));
-                                        addLog('Hapus Banner Promosi', `Menghapus banner: ${banner.title}`);
+                                      if (!banner.id) {
+                                        showToast('ID Banner tidak valid.', 'error');
+                                        return;
                                       }
+                                      requestConfirm('Hapus Banner Promosi', `Apakah Anda yakin ingin menghapus banner iklan "${banner.title}"?`, async () => {
+                                        try {
+                                          await ApiService.deleteItem('banners', banner.id);
+                                          onUpdateBanners(banners.filter(b => b.id !== banner.id));
+                                          addLog('Hapus Banner Promosi', `Menghapus banner: ${banner.title}`);
+                                          showToast('Banner promosi berhasil dihapus.', 'success');
+                                        } catch (err: any) {
+                                          console.error('Gagal menghapus banner:', err);
+                                          showToast('Gagal menghapus banner promosi dari server.', 'error');
+                                        }
+                                      });
                                     }}
                                     className="p-1.5 bg-red-50 hover:bg-red-500 hover:text-white rounded-lg text-red-600 transition cursor-pointer"
                                   >
@@ -2158,9 +2250,13 @@ const processAlumniImage = (
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        const compressed = await compressImage(file);
-                        onUpdatePopupPromo({ ...popupPromo, image: compressed, imageUrl: compressed });
-                        addLog('Upload Gambar Popup', 'Berhasil memperbarui poster popup promosi.');
+                        try {
+                          const url = await uploadFileAndGetUrl(file);
+                          onUpdatePopupPromo({ ...popupPromo, image: url, imageUrl: url });
+                          addLog('Upload Gambar Popup', 'Berhasil memperbarui poster popup promosi.');
+                        } catch (err) {
+                          console.error('Gagal mengupload gambar popup:', err);
+                        }
                       }
                     }}
                     className="block w-full text-xs text-slate-500 file:mr-4 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-navy-900 file:text-white hover:file:bg-navy-950 cursor-pointer"
@@ -2336,10 +2432,21 @@ const processAlumniImage = (
                             </button>
                             <button
                               onClick={() => {
-                                if (confirm('Apakah Anda yakin ingin menghapus ticker pengumuman ini?')) {
-                                  onUpdateRunningTexts(runningTexts.filter(t => t.id !== item.id));
-                                  addLog('Hapus Running Text', `Menghapus running text: ${item.text}`);
+                                if (!item.id) {
+                                  showToast('ID Ticker tidak valid.', 'error');
+                                  return;
                                 }
+                                requestConfirm('Hapus Ticker Pengumuman', 'Apakah Anda yakin ingin menghapus ticker pengumuman ini?', async () => {
+                                  try {
+                                    await ApiService.deleteItem('running_texts', item.id);
+                                    onUpdateRunningTexts(runningTexts.filter(t => t.id !== item.id));
+                                    addLog('Hapus Running Text', `Menghapus running text: ${item.text}`);
+                                    showToast('Ticker pengumuman berhasil dihapus.', 'success');
+                                  } catch (err: any) {
+                                    console.error('Gagal menghapus ticker:', err);
+                                    showToast('Gagal menghapus ticker dari server.', 'error');
+                                  }
+                                });
                               }}
                               className="p-1.5 bg-red-50 hover:bg-red-500 hover:text-white rounded-lg text-red-600 transition cursor-pointer"
                             >
@@ -2499,8 +2606,12 @@ const processAlumniImage = (
                         onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            const compressed = await compressImage(file);
-                            setProductForm(prev => ({ ...prev, image: compressed }));
+                            try {
+                              const url = await uploadFileAndGetUrl(file);
+                              setProductForm(prev => ({ ...prev, image: url }));
+                            } catch (err) {
+                              console.error('Gagal mengupload gambar produk:', err);
+                            }
                           }
                         }}
                         className="block w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-navy-900 file:text-white hover:file:bg-navy-950 cursor-pointer"
@@ -2587,10 +2698,21 @@ const processAlumniImage = (
                             </button>
                             <button
                               onClick={() => {
-                                if (confirm(`Hapus produk "${product.name}"?`)) {
-                                  onUpdateStoreProducts(storeProducts.filter(p => p.id !== product.id));
-                                  addLog('Hapus Produk Store', `Menghapus produk: ${product.name}`);
+                                if (!product.id) {
+                                  showToast('ID Produk tidak valid.', 'error');
+                                  return;
                                 }
+                                requestConfirm('Hapus Produk', `Apakah Anda yakin ingin menghapus produk "${product.name}"?`, async () => {
+                                  try {
+                                    await ApiService.deleteItem('store_products', product.id);
+                                    onUpdateStoreProducts(storeProducts.filter(p => p.id !== product.id));
+                                    addLog('Hapus Produk Store', `Menghapus produk: ${product.name}`);
+                                    showToast('Produk berhasil dihapus.', 'success');
+                                  } catch (err: any) {
+                                    console.error('Gagal menghapus produk:', err);
+                                    showToast('Gagal menghapus produk dari server.', 'error');
+                                  }
+                                });
                               }}
                               className="p-1.5 bg-red-50 hover:bg-red-500 hover:text-white rounded-lg text-red-600 transition cursor-pointer"
                             >
@@ -2701,10 +2823,21 @@ const processAlumniImage = (
                         <td className="p-4 text-center">
                           <button
                             onClick={() => {
-                              if (confirm(`Hapus data pesanan "${order.id}" dari arsip?`)) {
-                                onUpdateStoreOrders(storeOrders.filter(o => o.id !== order.id));
-                                addLog('Hapus Pesanan', `Menghapus data transaksi: ${order.id}`);
+                              if (!order.id) {
+                                showToast('ID Pesanan tidak valid.', 'error');
+                                return;
                               }
+                              requestConfirm('Hapus Pesanan', `Apakah Anda yakin ingin menghapus data pesanan "${order.id}" dari arsip?`, async () => {
+                                try {
+                                  await ApiService.deleteItem('store_orders', order.id);
+                                  onUpdateStoreOrders(storeOrders.filter(o => o.id !== order.id));
+                                  addLog('Hapus Pesanan', `Menghapus data transaksi: ${order.id}`);
+                                  showToast('Pesanan berhasil dihapus.', 'success');
+                                } catch (err: any) {
+                                  console.error('Gagal menghapus pesanan:', err);
+                                  showToast('Gagal menghapus pesanan dari server.', 'error');
+                                }
+                              });
                             }}
                             className="p-1.5 bg-red-50 hover:bg-red-500 hover:text-white rounded-lg text-red-600 transition cursor-pointer"
                             title="Hapus data pesanan"
@@ -3016,10 +3149,21 @@ const processAlumniImage = (
                                   </button>
                                   <button
                                     onClick={() => {
-                                      if (confirm(`Hapus pengumuman "${item.title}"?`)) {
-                                        onUpdateAnnouncements(announcements.filter(a => a.id !== item.id));
-                                        addLog('Hapus Pengumuman', `Menghapus pengumuman: ${item.title}`);
+                                      if (!item.id) {
+                                        showToast('ID Pengumuman tidak valid.', 'error');
+                                        return;
                                       }
+                                      requestConfirm('Hapus Pengumuman', `Apakah Anda yakin ingin menghapus pengumuman "${item.title}"?`, async () => {
+                                        try {
+                                          await ApiService.deleteItem('announcements', item.id);
+                                          onUpdateAnnouncements(announcements.filter(a => a.id !== item.id));
+                                          addLog('Hapus Pengumuman', `Menghapus pengumuman: ${item.title}`);
+                                          showToast('Pengumuman berhasil dihapus.', 'success');
+                                        } catch (err: any) {
+                                          console.error('Gagal menghapus pengumuman:', err);
+                                          showToast('Gagal menghapus pengumuman dari server.', 'error');
+                                        }
+                                      });
                                     }}
                                     className="p-1.5 bg-red-50 hover:bg-red-500 hover:text-white rounded-lg text-red-600 transition cursor-pointer"
                                   >
@@ -3554,6 +3698,47 @@ const processAlumniImage = (
                 <span className="font-bold block text-xs text-amber-950 mb-0.5">Petunjuk Tata Letak</span>
                 Seluruh perubahan yang Anda lakukan di panel tata letak ini akan langsung mempengaruhi struktur layout halaman utama secara real-time. Jika Anda menonaktifkan suatu bagian, bagian tersebut tidak akan dirender oleh sistem untuk seluruh pengunjung website.
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-5 right-5 z-[9999] flex items-center gap-2 px-4 py-3 bg-slate-900 text-white text-xs font-semibold rounded-xl shadow-2xl animate-bounce">
+          <span className={toast.type === 'success' ? 'text-green-400' : toast.type === 'error' ? 'text-red-400' : 'text-blue-400'}>
+            {toast.type === 'success' ? '✓' : toast.type === 'error' ? '✗' : 'ℹ'}
+          </span>
+          <span>{toast.message}</span>
+        </div>
+      )}
+
+      {/* Custom Confirmation Dialog Modal */}
+      {confirmState && confirmState.isOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[10000] p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <span className="text-red-500 text-lg">⚠️</span> {confirmState.title}
+            </h3>
+            <p className="mt-2 text-xs text-slate-600 leading-relaxed">
+              {confirmState.message}
+            </p>
+            <div className="mt-5 flex gap-3 justify-end">
+              <button
+                onClick={() => setConfirmState(null)}
+                className="px-3.5 py-2 text-xs font-medium text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                onClick={() => {
+                  confirmState.onConfirm();
+                  setConfirmState(null);
+                }}
+                className="px-4 py-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition shadow-md shadow-red-200 cursor-pointer"
+              >
+                Ya, Hapus
+              </button>
             </div>
           </div>
         </div>
