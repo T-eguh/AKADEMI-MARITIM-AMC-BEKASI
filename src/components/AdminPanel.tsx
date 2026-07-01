@@ -2002,7 +2002,7 @@ export default function AdminPanel({
                           Sinkronisasi & Migrasi Otomatis ke
                         </h4>
                         <p className="text-xs text-slate-500 max-w-3xl leading-relaxed">
-                          Sistem web ini menyimpan perubahan gambar, teks, dan prodi yang Anda edit di Admin secara lokal di browser Anda (LocalStorage). Untuk kenyamanan Anda, sistem kami sekarang otomatis menyinkronkan semua data dan foto yang Anda edit langsung ke dalam file proyek ("public/amc_backup.json") di server dalam 2 detik. hasil edit Anda akan langsung ikut serta. Anda juga dapat menggunakan tombol <strong className="text-indigo-600">"Simpan Permanen ke Proyek"</strong> untuk memicu penyimpanan manual secara instan!
+                          Sistem web ini menyimpan perubahan gambar, teks, dan prodi yang Anda edit di Admin secara lokal di browser Anda (LocalStorage). Untuk kenyamanan Anda, sistem kami sekarang otomatis menyinkronkan semua data dan foto yang Anda edit langsung ke dalam file proyek ("public/amc_backup.json") di server dalam 2 detik. hasil edit Anda akan langsung ikut serta. Anda juga dapat
                         </p>
                         <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 mt-2">
                           <p className="text-[11px] text-emerald-800 leading-relaxed">
