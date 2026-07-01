@@ -1999,13 +1999,17 @@ export default function AdminPanel({
                       <div className="space-y-1">
                         <h4 className="font-display font-extrabold text-slate-900 text-sm flex items-center gap-2">
                           <Database className="h-4 w-4 text-navy-900 animate-pulse" />
-                          Sinkronisasi & Migrasi Otomatis 
+                          Sinkronisasi & Migrasi Otomatis ke
                         </h4>
                         <p className="text-xs text-slate-500 max-w-3xl leading-relaxed">
-                          Sistem web ini menyimpan perubahan gambar, teks, dan prodi yang Anda edit di Admin secara lokal di browser Anda (<strong className="text-navy-900">LocalStorage</strong>). 
-                          Untuk kenyamanan Anda, <strong className="text-emerald-600">sistem kami sekarang otomatis menyinkronkan semua data dan foto yang Anda edit langsung ke dalam file proyek ("public/amc_backup.json") di server dalam 2 detik.</strong> 
-                          Jika Anda baru saja mendeploy pembaruan dari GitHub atau mengedit file proyek secara manual, gunakan tombol <strong className="text-emerald-600">"Terapkan File Backup ke DB"</strong> untuk langsung memasukkan isi file backup ke database MySQL aktif Anda secara instan!
+                          Sistem web ini menyimpan perubahan gambar, teks, dan prodi yang Anda edit di Admin secara lokal di browser Anda (LocalStorage). Untuk kenyamanan Anda, sistem kami sekarang otomatis menyinkronkan semua data dan foto yang Anda edit langsung ke dalam file proyek ("public/amc_backup.json") di server dalam 2 detik. hasil edit Anda akan langsung ikut serta. Anda juga dapat menggunakan tombol <strong className="text-indigo-600">"Simpan Permanen ke Proyek"</strong> untuk memicu penyimpanan manual secara instan!
                         </p>
+                        <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 mt-2">
+                          <p className="text-[11px] text-emerald-800 leading-relaxed">
+                            <span className="font-bold block mb-0.5">Info Database Aktif (Railway/MySQL):</span>
+                            Jika Anda baru saja mendeploy pembaruan dari GitHub atau mengedit file proyek secara manual, gunakan tombol <strong className="text-emerald-700">"Terapkan File Backup ke DB"</strong> di samping untuk langsung memasukkan isi file backup ke database MySQL aktif Anda secara instan!
+                          </p>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0 flex-wrap">
                         <button
