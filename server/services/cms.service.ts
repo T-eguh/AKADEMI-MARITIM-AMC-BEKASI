@@ -37,19 +37,57 @@ export class CMSService {
   static async exportBackup(): Promise<any> {
     if (getIsMySQL() && pool) {
       try {
-        // Export fully consolidated JSON structure of all standard collections
-        const tables = [
-          'users', 'news', 'gallery', 'facilities', 'store_products', 'store_orders'
-        ];
-        const backupData: any = { isMySQLDump: true, timestamp: new Date().toISOString() };
-        for (const table of tables) {
-          const [rows] = await pool.query(`SELECT * FROM \`${table}\``);
-          backupData[table] = rows;
+        const backupData: any = { 
+          isMySQLDump: true, 
+          timestamp: new Date().toISOString(),
+          updatedAt: Date.now()
+        };
+
+        // 1. Fetch from standard tables
+        const tableMappings: { [key: string]: string } = {
+          'users': 'users',
+          'news': 'newsItems',
+          'gallery': 'galleryItems',
+          'facilities': 'facilities',
+          'store_products': 'storeProducts',
+          'store_orders': 'storeOrders'
+        };
+
+        for (const [tableName, payloadKey] of Object.entries(tableMappings)) {
+          const [rows]: any = await pool.query(`SELECT * FROM \`${tableName}\``);
+          // Parse stringified JSON fields (like store_orders.items)
+          const parsedRows = rows.map((row: any) => {
+            const parsedRow: any = {};
+            for (const [k, v] of Object.entries(row)) {
+              if (typeof v === 'string') {
+                try {
+                  // Try to parse JSON array or object
+                  if ((v.startsWith('{') && v.endsWith('}')) || (v.startsWith('[') && v.endsWith(']'))) {
+                    parsedRow[k] = JSON.parse(v);
+                  } else {
+                    parsedRow[k] = v;
+                  }
+                } catch {
+                  parsedRow[k] = v;
+                }
+              } else {
+                parsedRow[k] = v;
+              }
+            }
+            return parsedRow;
+          });
+          backupData[payloadKey] = parsedRows;
         }
-        
-        // Also fetch site_content key-values
+
+        // 2. Fetch site_content and map into top-level keys
         const [contentRows]: any = await pool.query('SELECT * FROM site_content');
-        backupData.site_content = contentRows;
+        for (const row of contentRows) {
+          try {
+            backupData[row.section] = JSON.parse(row.data);
+          } catch {
+            backupData[row.section] = row.data;
+          }
+        }
 
         return backupData;
       } catch (err) {
@@ -71,31 +109,54 @@ export class CMSService {
 
     if (getIsMySQL() && pool) {
       try {
-        const tables = [
-          'users', 'news', 'gallery', 'facilities', 'store_products', 'store_orders'
-        ];
-        
-        for (const table of tables) {
-          if (Array.isArray(backupData[table])) {
-            await pool.query(`DELETE FROM \`${table}\``);
-            for (const row of backupData[table]) {
-              const keys = Object.keys(row).map(k => `\`${k}\``).join(', ');
-              const values = Object.values(row);
+        // 1. Save standard tables
+        const tableMappings: { [key: string]: string } = {
+          'users': 'users',
+          'news': 'newsItems',
+          'gallery': 'galleryItems',
+          'facilities': 'facilities',
+          'store_products': 'storeProducts',
+          'store_orders': 'storeOrders'
+        };
+
+        for (const [tableName, payloadKey] of Object.entries(tableMappings)) {
+          const items = backupData[payloadKey] || backupData[tableName];
+          if (Array.isArray(items)) {
+            await pool.query(`DELETE FROM \`${tableName}\``);
+            for (const row of items) {
+              // Convert object fields to string if they are arrays/objects for MySQL
+              const cleanedRow: any = {};
+              for (const [k, v] of Object.entries(row)) {
+                cleanedRow[k] = (typeof v === 'object' && v !== null) ? JSON.stringify(v) : v;
+              }
+              const keys = Object.keys(cleanedRow).map(k => `\`${k}\``).join(', ');
+              const values = Object.values(cleanedRow);
               const placeholders = values.map(() => '?').join(', ');
-              await pool.query(`INSERT INTO \`${table}\` (${keys}) VALUES (${placeholders})`, values);
+              if (keys.length > 0) {
+                await pool.query(`INSERT INTO \`${tableName}\` (${keys}) VALUES (${placeholders})`, values);
+              }
             }
           }
         }
 
-        if (Array.isArray(backupData.site_content)) {
-          await pool.query('DELETE FROM site_content');
-          for (const row of backupData.site_content) {
-            await pool.query('INSERT INTO site_content (id, section, data) VALUES (?, ?, ?)', [
-              row.id, row.section, row.data
-            ]);
+        // 2. Save all other keys into site_content
+        const standardKeys = ['users', 'news', 'gallery', 'facilities', 'store_products', 'store_orders', 'newsItems', 'galleryItems', 'storeProducts', 'storeOrders', 'site_content', 'isMySQLDump', 'timestamp', 'updatedAt'];
+        
+        await pool.query('DELETE FROM site_content');
+        for (const [key, value] of Object.entries(backupData)) {
+          if (!standardKeys.includes(key)) {
+            const serialized = JSON.stringify(value);
+            const id = `content_${key}_${Date.now()}`;
+            await pool.query(
+              'INSERT INTO site_content (id, section, data) VALUES (?, ?, ?)',
+              [id, key, serialized]
+            );
           }
         }
+
         console.log('CMSService: MySQL Backup imported successfully.');
+        // Also sync write to JSON_DB_PATH as an automatic dual-write backup!
+        fs.writeFileSync(JSON_DB_PATH, JSON.stringify(backupData, null, 2), 'utf8');
         return;
       } catch (err: any) {
         console.error('CMSService: Failed to import to MySQL, writing to JSON file as fallback:', err);

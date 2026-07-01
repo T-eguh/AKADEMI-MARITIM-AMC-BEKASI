@@ -3,9 +3,11 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import path from 'path';
+import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { initDB } from './server/config/db';
 import { AuthService } from './server/services/auth.service';
+import { CMSService } from './server/services/cms.service';
 import apiRoutes from './server/routes/api.routes';
 import { errorHandler } from './server/middlewares/error.middleware';
 
@@ -30,6 +32,24 @@ async function startServer() {
   // Body Parsing configuration with elevated limits to support backups/JSON dumps
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+  // Dynamic route for amc_backup.json to fetch current database state (or fallback JSON on disk)
+  app.get('/amc_backup.json', async (req, res) => {
+    try {
+      const data = await CMSService.exportBackup();
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      return res.status(200).json(data);
+    } catch (err: any) {
+      console.error('Express amc_backup.json endpoint error:', err);
+      // Fallback: try reading the file directly
+      const fallbackPath = path.join(process.cwd(), 'public', 'amc_backup.json');
+      if (fs.existsSync(fallbackPath)) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        return res.sendFile(fallbackPath);
+      }
+      return res.status(500).json({ error: 'Failed to retrieve website configuration' });
+    }
+  });
 
   // Static files inside public (like amc_backup.json and uploads)
   app.use(express.static(path.join(process.cwd(), 'public')));

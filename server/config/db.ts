@@ -178,6 +178,70 @@ export async function initDB() {
       )
     `);
 
+    // Check if site_content or news table is empty to perform automatic migration on first startup
+    const [contentCountRows]: any = await connection.query('SELECT COUNT(*) as count FROM site_content');
+    const contentCount = contentCountRows[0]?.count || 0;
+    
+    const [newsCountRows]: any = await connection.query('SELECT COUNT(*) as count FROM news');
+    const newsCount = newsCountRows[0]?.count || 0;
+    
+    if (contentCount === 0 && newsCount === 0) {
+      console.log('AMC Backend: Detected empty MySQL database. Initiating automatic migration from amc_backup.json...');
+      const backupPath = path.join(process.cwd(), 'public', 'amc_backup.json');
+      if (fs.existsSync(backupPath)) {
+        try {
+          const contentStr = fs.readFileSync(backupPath, 'utf8');
+          if (contentStr && contentStr.trim().length > 0) {
+            const backupData = JSON.parse(contentStr);
+            
+            // Import standard tables
+            const tableMappings: { [key: string]: string } = {
+              'users': 'users',
+              'news': 'newsItems',
+              'gallery': 'galleryItems',
+              'facilities': 'facilities',
+              'store_products': 'storeProducts',
+              'store_orders': 'storeOrders'
+            };
+
+            for (const [tableName, payloadKey] of Object.entries(tableMappings)) {
+              const items = backupData[payloadKey] || backupData[tableName];
+              if (Array.isArray(items)) {
+                for (const row of items) {
+                  const cleanedRow: any = {};
+                  for (const [k, v] of Object.entries(row)) {
+                    cleanedRow[k] = (typeof v === 'object' && v !== null) ? JSON.stringify(v) : v;
+                  }
+                  const keys = Object.keys(cleanedRow).map(k => `\`${k}\``).join(', ');
+                  const values = Object.values(cleanedRow);
+                  const placeholders = values.map(() => '?').join(', ');
+                  if (keys.length > 0) {
+                    await connection.query(`INSERT INTO \`${tableName}\` (${keys}) VALUES (${placeholders})`, values);
+                  }
+                }
+              }
+            }
+
+            // Import site content
+            const standardKeys = ['users', 'news', 'gallery', 'facilities', 'store_products', 'store_orders', 'newsItems', 'galleryItems', 'storeProducts', 'storeOrders', 'site_content', 'isMySQLDump', 'timestamp', 'updatedAt'];
+            for (const [key, value] of Object.entries(backupData)) {
+              if (!standardKeys.includes(key)) {
+                const serialized = JSON.stringify(value);
+                const id = `content_${key}_${Date.now()}`;
+                await connection.query(
+                  'INSERT INTO site_content (id, section, data) VALUES (?, ?, ?)',
+                  [id, key, serialized]
+                );
+              }
+            }
+            console.log('AMC Backend: Automatic migration of amc_backup.json to MySQL completed successfully.');
+          }
+        } catch (migErr) {
+          console.error('AMC Backend: Failed to automatically migrate data to MySQL:', migErr);
+        }
+      }
+    }
+
     connection.release();
     console.log('AMC Backend: MySQL Database Tables verified/created successfully.');
   } catch (error: any) {
