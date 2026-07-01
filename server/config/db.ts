@@ -5,7 +5,9 @@ import path from 'path';
 // Check if MySQL connection environment variables are available and not empty
 const hasMySQLConfig = !!(
   (process.env.DB_HOST && process.env.DB_HOST.trim() !== '') ||
-  (process.env.DATABASE_URL && process.env.DATABASE_URL.trim() !== '')
+  (process.env.DATABASE_URL && process.env.DATABASE_URL.trim() !== '') ||
+  (process.env.MYSQL_URL && process.env.MYSQL_URL.trim() !== '') ||
+  (process.env.MYSQLHOST && process.env.MYSQLHOST.trim() !== '')
 );
 
 let pool: mysql.Pool | null = null;
@@ -13,14 +15,15 @@ let isMySQLState = false;
 
 if (hasMySQLConfig) {
   try {
-    const config: mysql.PoolOptions = process.env.DATABASE_URL
-      ? { uri: process.env.DATABASE_URL }
+    const databaseUrl = process.env.DATABASE_URL || process.env.MYSQL_URL;
+    const config: mysql.PoolOptions = databaseUrl
+      ? { uri: databaseUrl }
       : {
-          host: process.env.DB_HOST,
-          user: process.env.DB_USER || 'root',
-          password: process.env.DB_PASSWORD || '',
-          database: process.env.DB_NAME || 'amc_db',
-          port: Number(process.env.DB_PORT || 3306),
+          host: process.env.DB_HOST || process.env.MYSQLHOST,
+          user: process.env.DB_USER || process.env.MYSQLUSER || 'root',
+          password: process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || '',
+          database: process.env.DB_NAME || process.env.MYSQLDATABASE || 'amc_db',
+          port: Number(process.env.DB_PORT || process.env.MYSQLPORT || 3306),
           waitForConnections: true,
           connectionLimit: 10,
           queueLimit: 0,

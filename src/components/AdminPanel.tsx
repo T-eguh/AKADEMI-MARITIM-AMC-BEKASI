@@ -442,7 +442,7 @@ export default function AdminPanel({
         success = response.ok;
       }
       if (success) {
-        setMigrationSuccess('Perubahan berhasil disimpan secara permanen ke dalam file proyek "public/amc_backup.json"! Anda kini bebas mendeploy langsung ke Vercel tanpa khawatir data/foto hilang.');
+        setMigrationSuccess('Perubahan berhasil disimpan secara permanen ke dalam file proyek tanpa khawatir data/foto hilang.');
       } else {
         throw new Error('Server mengembalikan status error saat menyimpan data.');
       }
@@ -489,7 +489,7 @@ export default function AdminPanel({
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
-      setMigrationSuccess('Ekspor sukses! ubah nama file ini menjadi "amc_backup.json" lalu taruh di dalam folder "public" proyek Anda sebelum di-deploy/push!');
+      setMigrationSuccess('Ekspor sukses!');
       setTimeout(() => setMigrationSuccess(null), 15000);
     } catch (err) {
       setMigrationError('Gagal mengekspor data: ' + (err instanceof Error ? err.message : String(err)));
@@ -1970,12 +1970,12 @@ export default function AdminPanel({
                       <div className="space-y-1">
                         <h4 className="font-display font-extrabold text-slate-900 text-sm flex items-center gap-2">
                           <Database className="h-4 w-4 text-navy-900 animate-pulse" />
-                          Sinkronisasi & Migrasi Otomatis ke Vercel / Live Site
+                          Sinkronisasi & Migrasi Otomatis 
                         </h4>
                         <p className="text-xs text-slate-500 max-w-3xl leading-relaxed">
                           Sistem web ini menyimpan perubahan gambar, teks, dan prodi yang Anda edit di Admin secara lokal di browser Anda (<strong className="text-navy-900">LocalStorage</strong>). 
                           Untuk kenyamanan Anda, <strong className="text-emerald-600">sistem kami sekarang otomatis menyinkronkan semua data dan foto yang Anda edit langsung ke dalam file proyek ("public/amc_backup.json") di server dalam 2 detik.</strong> 
-                          Saat Anda melakukan deploy ke Vercel melalui AI Studio atau mengunduh kode ZIP, hasil edit Anda akan langsung ikut serta. Anda juga dapat menggunakan tombol <strong className="text-indigo-600">"Simpan Permanen ke Proyek"</strong> untuk memicu penyimpanan manual secara instan!
+                          hasil edit Anda akan langsung ikut serta. Anda juga dapat menggunakan tombol <strong className="text-indigo-600">"Simpan Permanen ke Proyek"</strong> untuk memicu penyimpanan manual secara instan!
                         </p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0 flex-wrap">
