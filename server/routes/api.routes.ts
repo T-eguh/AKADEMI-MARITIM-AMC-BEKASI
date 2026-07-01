@@ -70,5 +70,11 @@ router.post(
   authorizeRoles(['Super Admin']),
   CMSController.importBackupFile
 );
+router.post(
+  '/backup/sync-file-to-db',
+  authenticateJWT,
+  authorizeRoles(['Super Admin', 'Admin']),
+  CMSController.syncFileToDB
+);
 
 export default router;

@@ -164,4 +164,19 @@ export class CMSController {
       return res.status(500).json({ message: err.message });
     }
   }
+
+  static async syncFileToDB(req: Request, res: Response) {
+    try {
+      const backupPath = path.join(process.cwd(), 'public', 'amc_backup.json');
+      if (!fs.existsSync(backupPath)) {
+        return res.status(404).json({ message: 'File amc_backup.json tidak ditemukan di server.' });
+      }
+      const fileData = fs.readFileSync(backupPath, 'utf8');
+      const backupData = JSON.parse(fileData);
+      await CMSService.importBackup(backupData);
+      return res.status(200).json({ message: 'Sistem berhasil sinkronisasi dari file amc_backup.json ke database!' });
+    } catch (err: any) {
+      return res.status(500).json({ message: 'Gagal melakukan sinkronisasi: ' + err.message });
+    }
+  }
 }

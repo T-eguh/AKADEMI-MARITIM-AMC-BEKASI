@@ -280,6 +280,7 @@ export default function AdminPanel({
   const [activeChart, setActiveChart] = useState<'visitors' | 'pmb' | 'news' | 'agenda' | 'gallery'>('visitors');
   const [savingToProject, setSavingToProject] = useState(false);
   const [loadingFromServer, setLoadingFromServer] = useState(false);
+  const [syncingFileToDB, setSyncingFileToDB] = useState(false);
 
   const handleLoadFromServer = async () => {
     setLoadingFromServer(true);
@@ -450,6 +451,34 @@ export default function AdminPanel({
       setMigrationError('Gagal menyimpan ke file proyek: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setSavingToProject(false);
+    }
+  };
+
+  const handleSyncFileToDB = async () => {
+    setSyncingFileToDB(true);
+    setMigrationError(null);
+    setMigrationSuccess(null);
+    try {
+      const token = localStorage.getItem('amc_admin_token');
+      const response = await fetch('/api/backup/sync-file-to-db', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const result = await response.json();
+      if (response.ok) {
+        setMigrationSuccess(result.message || 'Berhasil melakukan sinkronisasi file amc_backup.json ke database!');
+        // Refresh client-side state by loading the newly synced database backup
+        await handleLoadFromServer();
+      } else {
+        throw new Error(result.message || 'Gagal sinkronisasi.');
+      }
+    } catch (err: any) {
+      setMigrationError('Gagal sinkronisasi dari file ke database: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setSyncingFileToDB(false);
     }
   };
 
@@ -1975,7 +2004,7 @@ export default function AdminPanel({
                         <p className="text-xs text-slate-500 max-w-3xl leading-relaxed">
                           Sistem web ini menyimpan perubahan gambar, teks, dan prodi yang Anda edit di Admin secara lokal di browser Anda (<strong className="text-navy-900">LocalStorage</strong>). 
                           Untuk kenyamanan Anda, <strong className="text-emerald-600">sistem kami sekarang otomatis menyinkronkan semua data dan foto yang Anda edit langsung ke dalam file proyek ("public/amc_backup.json") di server dalam 2 detik.</strong> 
-                          hasil edit Anda akan langsung ikut serta. Anda juga dapat menggunakan tombol <strong className="text-indigo-600">"Simpan Permanen ke Proyek"</strong> untuk memicu penyimpanan manual secara instan!
+                          Jika Anda baru saja mendeploy pembaruan dari GitHub atau mengedit file proyek secara manual, gunakan tombol <strong className="text-emerald-600">"Terapkan File Backup ke DB"</strong> untuk langsung memasukkan isi file backup ke database MySQL aktif Anda secara instan!
                         </p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0 flex-wrap">
@@ -1996,6 +2025,16 @@ export default function AdminPanel({
                         >
                           <RefreshCw className={`h-3.5 w-3.5 ${loadingFromServer ? 'animate-spin' : ''}`} />
                           {loadingFromServer ? 'Memuat...' : 'Muat Ulang dari Server'}
+                        </button>
+                        <button
+                          onClick={handleSyncFileToDB}
+                          disabled={syncingFileToDB}
+                          type="button"
+                          className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all"
+                          title="Gunakan ini untuk menyalin seluruh isi file amc_backup.json dari server (GitHub) langsung ke database aktif MySQL Anda secara paksa."
+                        >
+                          <Database className={`h-3.5 w-3.5 ${syncingFileToDB ? 'animate-spin' : ''}`} />
+                          {syncingFileToDB ? 'Menyinkronkan...' : 'Terapkan File Backup ke DB'}
                         </button>
                         <button
                           onClick={handleExportConfig}
